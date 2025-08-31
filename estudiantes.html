@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AJS - Gestión de Estudiantes</title>
+    <link rel="icon" href="./img/logo-ico.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="./css/styles.css">
+    <link rel="stylesheet" href="./css/styles_popup.css">
+</head>
+<body class="transactions-theme">
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <div class="logo-image">
+                    <img src="./img/logo.jpg" alt="Logo AJS" class="logo-img">
+                </div>
+                <h1>AJS - Gestión de Estudiantes</h1>
+                <div class="logo-colors">
+                    <div class="color-box blue"></div>
+                    <div class="color-box yellow"></div>
+                    <div class="color-box white"></div>
+                </div>
+                <!-- Boton cerrar session Después del logo-colors -->
+                <div>
+                    <button onclick="logout()" class="submit-btn secondary">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </button>
+                </div>
+
+                <div>
+                    <a class="submit-btn secondary" href="index.html">
+                        <i class="fas fa-file-invoice"></i> Recibos
+                    </a>
+                </div>
+                <div>
+                    <a class="submit-btn secondary" href="consultar_recibos.html">
+                        <i class="fas fa-list"></i> Consultar Recibos
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <section class="card filtros">
+                <h2><i class="fas fa-filter"></i> Filtros</h2>
+                <div class="filter-container">
+                    <div class="form-group">
+                        <label for="grado-filter">Grado:</label>
+                        <select id="grado-filter" class="form-input">
+                            <option value="">Todos</option>
+                            <option value="4A">4TO AÑO</option>
+                            <option value="5A">5TO AÑO</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="seccion-filter">Sección:</label>
+                        <select id="seccion-filter" class="form-input">
+                            <option value="">Todas</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sexo-filter">Sexo:</label>
+                        <select id="sexo-filter" class="form-input">
+                            <option value="">Todos</option>
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                        </select>
+                    </div>
+                    <button id="btn-filtrar" class="submit-btn">
+                        <i class="fas fa-search"></i> Filtrar
+                    </button>
+                    <button id="btn-limpiar" class="submit-btn secondary">
+                        <i class="fas fa-broom"></i> Limpiar
+                    </button>
+                </div>
+            </section>
+
+            <section class="card resultados">
+                <div class="resultados-header">
+                    <h2><i class="fas fa-users"></i> Lista de Estudiantes</h2>
+                    <button id="btn-exportar" class="submit-btn excel">
+                        <i class="fas fa-file-excel"></i> Exportar Excel
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table id="tabla-estudiantes" class="display" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>Cédula</th>
+                                <th>Nombre y Apellido</th>
+                                <th>Fecha Nac.</th>
+                                <th>Edad</th>
+                                <th>Sexo</th>
+                                <th>Grado</th>
+                                <th>Sección</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-body">
+                            <!-- Datos se cargarán via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="./js/estudiantes.js"></script>
+    <script src="./js/auth.js"></script>
+
+</body>
+</html>

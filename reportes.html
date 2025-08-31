@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AJS - Reportes</title>
+    <link rel="icon" href="./img/logo-ico.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="./css/styles.css">
+    <link rel="stylesheet" href="./css/styles_popup.css">
+</head>
+<body class="transactions-theme">
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <div class="logo-image">
+                    <img src="./img/logo.jpg" alt="Logo AJS" class="logo-img">
+                </div>
+                <h1>AJS - Generador de Reportes</h1>
+                <div class="logo-colors">
+                    <div class="color-box blue"></div>
+                    <div class="color-box yellow"></div>
+                    <div class="color-box white"></div>
+                </div>
+                <!-- Boton cerrar session Después del logo-colors -->
+                <div>
+                    <button onclick="logout()" class="submit-btn secondary">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </button>
+                </div>
+
+                <div>
+                    <a class="submit-btn secondary" href="index.html">
+                        <i class="fas fa-file-invoice"></i> Nuevo Recibo
+                    </a>
+                    <a class="submit-btn secondary" href="consultar_recibos.html" style="margin-left: 10px;">
+                        <i class="fas fa-list"></i> Consultar Recibos
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <section class="card reportes-container">
+                <h2><i class="fas fa-chart-pie"></i> Generar Reportes</h2>
+                
+                <div class="reporte-option">
+                    <h3><i class="fas fa-calendar-day"></i> Reporte Diario</h3>
+                    <div class="form-group">
+                        <label for="fecha-reporte">Fecha:</label>
+                        <input type="date" id="fecha-reporte" class="date-input" value="">
+                    </div>
+                    <div class="form-group">
+                        <label for="usuario-reporte">Usuario:</label>
+                        <input type="text" id="usuario-reporte" class="form-input" value="" disabled>
+                    </div>
+                    <button id="btn-generar-diario" class="submit-btn">
+                        <i class="fas fa-file-pdf"></i> Generar Reporte
+                    </button>
+                </div>
+                
+                <div class="reporte-option" style="opacity: 0.5; pointer-events: none;">
+                    <h3><i class="fas fa-calendar-week"></i> Reporte Semanal (Próximamente)</h3>
+                    <p>En desarrollo - Disponible pronto</p>
+                </div>
+                
+                <div class="reporte-option" style="opacity: 0.5; pointer-events: none;">
+                    <h3><i class="fas fa-calendar-alt"></i> Reporte Mensual (Próximamente)</h3>
+                    <p>En desarrollo - Disponible pronto</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
+    <script type="module">
+        import { generarReporte } from './js/reportesPDF.js';
+       // import { get_usuario_Estacion } from './js/recibos.js';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Establecer fecha predeterminada (hoy)
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('fecha-reporte').value = today;
+           // console.log("Usuario: ", localStorage.getItem('_usuarioEstacion'));
+            // document.getElementById('usuario-reporte').value = localStorage.getItem('_usuarioEstacion');
+            const usuarioAutenticado = localStorage.getItem('usuarioAutenticado');
+            const usuario = JSON.parse(usuarioAutenticado);
+            // console.log("Nombre: ",usuario.nombre)
+            document.getElementById('usuario-reporte').value = usuario.nombre;
+
+            
+            // Evento para generar reporte diario
+            document.getElementById('btn-generar-diario').addEventListener('click', function() {
+                const fecha = document.getElementById('fecha-reporte').value;
+                const usuario = document.getElementById('usuario-reporte').value;
+                
+                
+                if (!fecha) {
+                    showStatusMessage('Por favor seleccione una fecha', 'error');
+                    return;
+                }
+                
+                console.log("Fecha viaja a Generar Reporte: ",fecha);
+                generarReporte('DIARIO', fecha, usuario);
+            });
+        });
+        
+        // Función para mostrar mensajes (compatible con el resto del sistema)
+        function showStatusMessage(message, type = 'info') {
+            const existingPopup = document.getElementById('custom-status-popup');
+            if (existingPopup) existingPopup.remove();
+
+            const popup = document.createElement('div');
+            popup.id = 'custom-status-popup';
+
+            const popupContent = document.createElement('div');
+            popupContent.className = 'popup-content';
+
+            const messageElement = document.createElement('p');
+            messageElement.className = 'popup-message';
+            messageElement.textContent = message;
+            
+            if (type === 'success') messageElement.classList.add('success');
+            else if (type === 'error') messageElement.classList.add('error');
+            else if (type === 'loading') messageElement.classList.add('loading');
+
+            const acceptButton = document.createElement('button');
+            acceptButton.className = 'popup-button';
+            acceptButton.textContent = 'Aceptar';
+            
+            acceptButton.addEventListener('click', () => {
+                popup.classList.remove('show');
+                setTimeout(() => popup.remove(), 300);
+            });
+
+            popupContent.appendChild(messageElement);
+            popupContent.appendChild(acceptButton);
+            popup.appendChild(popupContent);
+            document.body.appendChild(popup);
+            
+            setTimeout(() => popup.classList.add('show'), 10);
+        }
+    </script>
+    <script src="./js/auth.js"></script>
+</body>
+</html>

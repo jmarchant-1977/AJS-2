@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AJS - Consulta de Recibos</title>
+    <link rel="icon" href="./img/logo-ico.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="./css/styles.css">
+    <link rel="stylesheet" href="./css/styles_popup.css">
+</head>
+<body class="transactions-theme">
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <div class="logo-image">
+                    <img src="./img/logo.jpg" alt="Logo AJS" class="logo-img">
+                </div>
+                <h1>AJS - Consulta de Recibos</h1>
+                <div class="logo-colors">
+                    <div class="color-box blue"></div>
+                    <div class="color-box yellow"></div>
+                    <div class="color-box white"></div>
+                </div>
+                <!-- Boton cerrar session Después del logo-colors -->
+                <!-- <script src="./js/auth.js"></script> -->
+                <div>
+                    <button onclick="logout()" class="submit-btn secondary">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </button>
+                </div>
+
+                <div>
+                    <a class="submit-btn secondary" href="index.html">
+                        <i class="fas fa-plus-circle"></i> Nuevo Recibo
+                    </a>
+                </div>
+                <div>
+                    <a class="submit-btn secondary" href="reportes.html">
+                        <i class="fas fa-chart-pie"></i> Generador de Reportes
+                    </a>
+                </div>
+                
+            </div>
+        </header>
+
+        <main>
+            <section class="card filtros">
+                <h2><i class="fas fa-filter"></i> Filtros</h2>
+                <div class="filter-container">
+                    <div class="form-group">
+                        <label for="fecha-inicio">Fecha Inicio:</label>
+                        <input type="date" id="fecha-inicio" class="date-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha-fin">Fecha Fin:</label>
+                        <input type="date" id="fecha-fin" class="date-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="mes-control">Mes:</label>
+                        <input type="month" id="mes-control" class="date-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="estado-recibo">Estado:</label>
+                        <select id="estado-recibo" class="form-input">
+                            <option value="">Todos</option>
+                            <option value="Activo">Activo</option>
+                            <option value="Cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <button id="btn-filtrar" class="submit-btn">
+                        <i class="fas fa-search"></i> Filtrar
+                    </button>
+                    <button id="btn-limpiar" class="submit-btn secondary">
+                        <i class="fas fa-broom"></i> Limpiar
+                    </button>
+                </div>
+            </section>
+
+            <section class="card resultados">
+                <div class="resultados-header">
+                    <h2><i class="fas fa-list"></i> Resultados</h2>
+                    <button id="btn-exportar" class="submit-btn excel">
+                        <i class="fas fa-file-excel"></i> Exportar Excel
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table id="tabla-recibos" class="display" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Fecha</th>
+                                <th>Año_Mes</th>
+                                <th>Cliente</th>
+                                <th>Alumno</th>
+                                <th>Rubro</th>
+                                <th>F_Pago</th>
+                                <th>Descripción</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                                <th>Acc.</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-body">
+                            <!-- Datos se cargarán via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+   <!--<script src="pdf.js"></script>--> 
+    <script src="./js/consultar_recibos.js"></script>
+    <script src="./js/auth.js"></script>
+
+
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AJS - Generador de Recibos</title>
+  
+    <link rel="icon" href="./img/logo-ico.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="./css/styles.css">
+    <link rel="stylesheet" href="./css/styles_popup.css">
+
+
+</head>
+<body class="dark-theme">
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <div class="logo-image">
+                    <img src="./img/logo.jpg" alt="Logo AJS" class="logo-img">
+                </div>
+                <h1>AJS - Generador de Recibos</h1>
+                <div class="logo-colors">
+                    <div class="color-box blue"></div>
+                    <div class="color-box yellow"></div>
+                    <div class="color-box white"></div>
+                </div>
+                <!-- Boton cerrar session Después del logo-colors -->
+                <div>
+                    <button onclick="logout()" class="submit-btn secondary">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </button>
+                </div>
+                <div>
+                    <a class="submit-btn secondary" href="consultar_recibos.html">
+                        <i class="fas fa-list"></i> Consultar Recibos
+                    </a>
+                </div>
+            <div>
+                    <a class="submit-btn secondary" href="">
+                        <i class="fas fa-usd"></i> Cargar Tasa
+                    </a>
+                </div>
+            </div>
+            <div class="date-picker">
+                <label for="fecha-recibo">Fecha del Recibo:</label>
+               <input type="date" id="fecha-recibo" required  class="date-input"> 
+            </div>
+        </header>
+
+        <main cclass="main-container">
+            <section class="card datos-recibo">
+                <h2><i class="fas fa-file-invoice"></i> Datos del Recibo</h2>
+                <div class="form-group">
+                    <label for="numero-recibo" class="recibo"># Recibo</label>
+                    <!-- <label id="numero-recibo"></label> -->
+                    <input type="text" id="numero-recibo" class="form-input" readonly style="border: none">
+                </div>
+                <div class="form-group">
+                    <label for="nombre-cliente">Representante</label>
+                    <input type="text" id="nombre-cliente" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="cedula">Alumno</label>
+                    <input type="text" id="cedula" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="rubro">Rubro</label>
+                    <select id="rubro" class="form-input" required style="padding: 5px 5px;">
+                        <!-- Se llenará dinámicamente desde la BD -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="forma-pago">Forma de Pago</label>
+                    <select id="forma-pago" class="form-input" required style="padding: 5px 5px;">
+                        <!-- Se llenará dinámicamente desde la BD -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="referencia">Referencia</label>
+                    <input type="text" id="referencia" class="form-input" >
+                </div>
+                <div class="form-group">
+                    <label for="descripcion">Descripción (máx. 70 caracteres):</label>
+                </div>
+                 <div class="form-group">
+                    <textarea id="descripcion" class="form-input" maxlength="70" required style="height: 72px; width: 254px"></textarea>
+                    <div class="char-counter"><span id="char-count">0</span>/70</div>
+                </div>
+                <div class="form-group">
+                    <label for="monto">Monto:</label>
+                    <input type="text" id="monto" class="currency-input" placeholder="0,00" data-prefix="Bs." required>
+                </div>
+            </section>
+
+            <section class="card preview-recibo">
+                <div>
+                    <h2><i class="fas fa-eye"></i> Vista Previa del Recibo <span id="tasa-actual-container"> sss</h2>
+                    </span>
+                    
+                </div>
+                
+                <div id="recibo-preview" class="recibo-preview-container">
+                    <!-- Vista previa del recibo se generará aquí -->
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <button id="submit-btn" class="submit-btn">
+                <i class="fas fa-save"></i> Guardar Recibo
+            </button>
+            <button id="print-btn" class="submit-btn secondary" disabled>
+                <i class="fas fa-print"></i> Imprimir PDF
+            </button>
+            <div id="status-message"></div>
+        </footer>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<!-- Otros scripts... -->
+
+    <script src="./js/recibos.js"></script>
+    <script src="./js/auth.js"></script>
+    
+</body>
+</html>
