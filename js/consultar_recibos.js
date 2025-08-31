@@ -344,7 +344,7 @@ function mostrarRecibos(recibos) {
     document.querySelectorAll('.btn-imprimir').forEach(btn => {
         btn.addEventListener('click', function() {
             const reciboId = this.getAttribute('data-id');
-            imprimirRecibo(reciboId);
+            imprimirRecibo(reciboId,true);
             console.log("Se creo btn de imp #: ",reciboId);
         });
     });
@@ -647,7 +647,7 @@ async function imprimirRecibo_RES_carta(reciboId) {
 }
 
  //recibo tamaño pequeño Papel Termico  (58mm x aprox. 120mm)
-async function imprimirRecibo(reciboId) {
+async function imprimirRecibo_viejo(reciboId) {
     console.log("ENtro a imprimir");
     try {
         const response = await fetch(`./apis/api_recibos.php?action=get_recibo&id=${reciboId}`);
@@ -732,7 +732,7 @@ async function imprimirRecibo(reciboId) {
             { label: "Cliente:", value: recibo.nombre_cliente.substring(0, 30) }, // Limitar longitud
             { label: "Alumno:", value: recibo.cedula },
             { label: "Rubro: ", value: recibo.rubro.substring(0, 30) },
-            { label: "Descripción:", value: recibo.cedula },
+            { label: "Descripción:", value: recibo.descripcion },
             { label: "Forma Pago:", value: recibo.forma_pago },
             { label: "Monto: ", value: montoFormatted }
             // { label: "Monto: ", value: `${parseFloat(recibo.monto).toFixed(2)}` }
@@ -762,7 +762,7 @@ async function imprimirRecibo(reciboId) {
 
         // Pie mínimo
         doc.setFontSize(7);
-        doc.text("Educar es nuestra pasion!", 30, currentY, { align: 'center' });
+        doc.text("¡EDUCAR ES NUESTRA PASIÓN!", 30, currentY, { align: 'center' });
 
         // Guardar con nombre compacto
         console.log("Recibo antes de Guardar: ", recibo);
@@ -772,6 +772,289 @@ async function imprimirRecibo(reciboId) {
         console.error('Error:', error);
         showStatusMessage('Error al generar PDF: ' + error.message, 'error');
     }
+}
+
+// Función para imprimir directamente
+function print_it(reciboId) {
+    console.log("Iniciando impresión directa para recibo:", reciboId);
+    
+    // Llamar a la función existente pero con un callback para imprimir
+    imprimirRecibo(reciboId, true);
+}
+
+// Modificación de la función imprimirRecibo para aceptar impresión directa
+async function imprimirRecibo(reciboId, imprimirDirecto = false) {
+    console.log("Entró a imprimir, DIRECTO: ", imprimirDirecto);
+    try {
+        const response = await fetch(`./apis/api_recibos.php?action=get_recibo&id=${reciboId}`);
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        const recibo = data.data;
+        const { jsPDF } = window.jspdf;
+        
+        // Configurar página en tamaño estrecho (80mm x aprox. 100mm)
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: [58, 120] // Ancho 58 mm (típico para impresoras térmicas), alto variable
+        });
+
+        // Escalar todo el contenido al 70% del tamaño original
+        const scaleFactor = 0.7;
+        doc.scale(scaleFactor, scaleFactor);
+        
+        // Ajustar todas las posiciones y tamaños multiplicando por 1/scaleFactor
+        const baseX = 5;
+        let currentY = 15;
+
+        // Eliminar logo para ahorrar espacio si es necesario
+        doc.addImage('./img/logo.jpg', 'JPG', baseX, 5, 20, 20);
+
+        // Estilos reducidos
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9); // Tamaño reducido
+        doc.setTextColor('#000000'); // Negro puro para mejor legibilidad térmica
+        doc.text("RECIBO DE PAGO", 35, currentY, { align: 'center' });
+        currentY += 5;
+
+        // Número de recibo
+        doc.setTextColor('#000000');
+        doc.text(`N° ${recibo.numero_recibo}`, 40, currentY, { align: 'center' });
+        currentY += 10;
+        
+        // Agregar línea horizontal después del número de recibo
+        doc.setDrawColor(100); // Color gris para la línea
+        doc.setLineWidth(0.5); // Grosor de la línea
+        doc.line(5, 28, 53, 28); // (x1, y1, x2, y2) - Desde 20 (inicio fecha) hasta 190 (final QR)
+
+        // Configuración de tabla compacta
+        const cellHeight = 5;
+        const leftColWidth = 20;
+        const rightColWidth = 65;
+
+        // Función optimizada para impresión térmica
+        const drawThermalCell = (x, y, width, height, text, isHeader = false) => {
+            doc.setDrawColor(0);
+            doc.setFillColor(255); // Fondo blanco (mejor para térmicas)
+            doc.rect(x, y, width, height, 'F'); // Rectángulo simple sin bordes redondeados
+            
+            doc.setTextColor(0);
+            doc.setFontSize(8);
+            doc.text(text, x + 1, y + height/2 + 2);
+        };
+
+        const montoFormatted = `${recibo.monto.toLocaleString('es-VE', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })}`;
+        
+        // Datos esenciales solamente
+        const essentialData = [
+            { 
+                label: "Fecha:", value: (() => {
+                const d = new Date(recibo.fecha + 'T00:00:00Z');
+                return `${d.getUTCDate().toString().padStart(2, '0')}/${(d.getUTCMonth() + 1).toString().padStart(2, '0')}/${d.getUTCFullYear()}`;
+                })() 
+            },
+            { label: "Cliente:", value: recibo.nombre_cliente.substring(0, 30) }, // Limitar longitud
+            { label: "Alumno:", value: recibo.cedula },
+            { label: "Rubro: ", value: recibo.rubro.substring(0, 30) },
+            { label: "Descripción:", value: recibo.descripcion },
+            { label: "Forma Pago:", value: recibo.forma_pago },
+            { label: "Monto: ", value: montoFormatted }
+        ];
+
+        // Dibujar tabla compacta
+        essentialData.forEach(row => {
+            drawThermalCell(baseX, currentY, leftColWidth, cellHeight, row.label);
+            drawThermalCell(baseX + leftColWidth, currentY, rightColWidth, cellHeight, row.value);
+            currentY += cellHeight;
+        });
+
+        currentY += 3;
+
+        // QR más pequeño
+        const qr = new QRious({ 
+            value: JSON.stringify({
+                n: recibo.numero_recibo,
+                f: recibo.fecha.split(' ')[0],
+                m: recibo.monto
+            }), 
+            size: 80 // Tamaño reducido
+        });
+        
+        doc.addImage(qr.toDataURL(), 'PNG', baseX + 5, currentY, 30, 30);
+        currentY += 32;
+
+        // Pie mínimo
+        doc.setFontSize(7);
+        doc.text("¡EDUCAR ES NUESTRA PASIÓN!", 30, currentY, { align: 'center' });
+
+        console.log("Recibo antes de Guardar: ", recibo);
+        
+        // Decidir qué hacer con el PDF según el parámetro imprimirDirecto
+        if (imprimirDirecto) {
+            try {
+                console.log("PDF enviado a impresión: ", doc);
+                await imprimirPDF(doc);
+                // await imprimirConPDFJS(doc);
+                
+            } catch (error) {
+                console.error('Error al imprimir, guardando como fallback:', error);
+                doc.save(`R-${recibo.numero_recibo}.pdf`);
+            }
+        } else {
+            // Guardar como antes
+            doc.save(`R-${recibo.numero_recibo}.pdf`);
+        }
+
+    } catch (error) {
+        console.error('Error:', error);
+        showStatusMessage('Error al generar PDF: ' + error.message, 'error');
+    }
+}
+
+// Función para imprimir el PDF directamente
+function imprimirPDF(doc) {
+    return new Promise((resolve, reject) => {
+        try {
+            // Crear un blob del PDF
+            const pdfBlob = doc.output('blob');
+            const url = URL.createObjectURL(pdfBlob);
+            
+            // Crear iframe
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'fixed';
+            iframe.style.right = '0';
+            iframe.style.bottom = '0';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.style.border = '0';
+            iframe.src = url;
+            
+            document.body.appendChild(iframe);
+            
+            iframe.onload = function() {
+                try {
+                    // Esperar a que el PDF se cargue completamente
+                    setTimeout(() => {
+                        try {
+                            // Intentar imprimir
+                            iframe.contentWindow.print();
+                            
+                            //Limpiar después de imprimir
+                            setTimeout(() => {
+                                document.body.removeChild(iframe);
+                                URL.revokeObjectURL(url);
+                                resolve();
+                            }, 100);
+                        } catch (printError) {
+                            document.body.removeChild(iframe);
+                            URL.revokeObjectURL(url);
+                            reject(printError);
+                        }
+                    }, 100); // Tiempo suficiente para que cargue el PDF
+                } catch (error) {
+                    document.body.removeChild(iframe);
+                    URL.revokeObjectURL(url);
+                    reject(error);
+                }
+            };
+            
+            iframe.onerror = function(error) {
+                document.body.removeChild(iframe);
+                URL.revokeObjectURL(url);
+                reject(error);
+            };
+            
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
+// Función para imprimir con PDF.js
+function imprimirConPDFJS(doc) {
+    return new Promise((resolve, reject) => {
+        try {
+            // Obtener el PDF como array buffer
+            const pdfData = doc.output('arraybuffer');
+            
+            // Cargar el PDF con PDF.js
+            pdfjsLib.getDocument({ data: pdfData }).promise.then(function(pdf) {
+                // Crear un contenedor para las páginas
+                const printContainer = document.createElement('div');
+                printContainer.id = 'pdf-print-container';
+                printContainer.style.position = 'absolute';
+                printContainer.style.left = '-9999px';
+                document.body.appendChild(printContainer);
+                
+                // Función para renderizar cada página
+                const renderPage = function(pageNum) {
+                    return pdf.getPage(pageNum).then(function(page) {
+                        const viewport = page.getViewport({ scale: 1.5 });
+                        const canvas = document.createElement('canvas');
+                        const context = canvas.getContext('2d');
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+                        
+                        printContainer.appendChild(canvas);
+                        
+                        return page.render({
+                            canvasContext: context,
+                            viewport: viewport
+                        }).promise;
+                    });
+                };
+                
+                // Renderizar todas las páginas
+                const pageRenderPromises = [];
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    pageRenderPromises.push(renderPage(i));
+                }
+                
+                // Imprimir cuando todas las páginas estén renderizadas
+                Promise.all(pageRenderPromises).then(() => {
+                    const printContent = printContainer.innerHTML;
+                    
+                    // Crear ventana de impresión
+                    const printWindow = window.open('', '_blank');
+                    printWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>Imprimir Recibo</title>
+                            <style>
+                                body { margin: 0; padding: 0; }
+                                canvas { display: block; margin: 0 auto; page-break-after: always; }
+                            </style>
+                        </head>
+                        <body>${printContent}</body>
+                        </html>
+                    `);
+                    
+                    printWindow.document.close();
+                    
+                    // Esperar a que cargue e imprimir
+                    printWindow.onload = function() {
+                        printWindow.print();
+                        setTimeout(() => {
+                            printWindow.close();
+                            document.body.removeChild(printContainer);
+                            resolve();
+                        }, 100);
+                    };
+                });
+            }).catch(reject);
+            
+        } catch (error) {
+            reject(error);
+        }
+    });
 }
 
 // async function imprimirRecibo(reciboId) {
@@ -890,48 +1173,6 @@ async function imprimirRecibo(reciboId) {
 //     }
 // }
 
-
-function exportarExcel_RES() {
-    // Obtener la instancia de DataTable
-    const dataTable = $('#tabla-recibos').DataTable();
-    
-    // Obtener todos los datos (incluyendo los filtrados)
-    const data = dataTable.rows({ search: 'applied' }).data().toArray();
-    
-    // Procesar los datos para Excel
-    const datosProcesados = data.map(row => ({
-        'N° Recibo': row[0],
-        'Fecha': row[1],
-        'Mes': row[2],
-        'Cliente': row[3],
-        'Alumno': row[4],
-        'Rubro': row[5],
-        'Forma Pago': row[6],
-        'Descripción': row[7],
-        'Monto': parseFloat(row[8].replace(/[^\d,]/g, '').replace(/\./g, '').replace(',', '.')),
-        'Estado': row[9]
-    }));
-    
-    // Crear hoja de cálculo
-    const ws = XLSX.utils.json_to_sheet(datosProcesados);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Recibos");
-    
-    // Formato de moneda para la columna Monto
-    const range = XLSX.utils.decode_range(ws['!ref']);
-    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-        const cell = XLSX.utils.encode_cell({r: R, c: 8}); // Columna I (Monto)
-        if (ws[cell]) {
-            // ws[cell].z = '#,##0.00;[Red]#,##0.00';
-            ws[cell].z = '#,0.00;[Red]#,0.00';
-            if (typeof ws[cell].v === 'number') {
-                ws[cell].v = parseFloat(ws[cell].v.toFixed(2));
-            }
-        }
-    }
-    
-    XLSX.writeFile(wb, `Recibos_${new Date().toISOString().slice(0,10)}.xlsx`);
-}
 
 
 function exportarExcel() {

@@ -136,6 +136,23 @@ try {
                 'data' => $recibo
             ]);
             break;
+        case 'get_recibo_id':
+            // Obtener un recibo específico por nu
+            $numero_recibo = $_GET['numero_recibo'] ?? 0;
+            
+            $stmt = $conn->prepare("SELECT * FROM recibos WHERE numero_recibo = :numero_recibo");
+            $stmt->execute([':numero_recibo' => $id]);
+            $recibo = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$recibo) {
+                throw new Exception("Recibo no encontrado");
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'data' => $recibo
+            ]);
+            break;
         
         case 'get_estudiantes':
             // Obtener todos los estudiantes

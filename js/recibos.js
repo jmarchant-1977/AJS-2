@@ -188,7 +188,7 @@ function updateReciboPreview() {
                 <span>${formaPago}</span>
             </div>
 <div class="recibo-row">
-                <span class="recibo-label">Rerefencia:</span>
+                <span class="recibo-label">Referencia:</span>
                 <span>${referencia}</span>
             </div>
             <div class="recibo-row">
@@ -271,7 +271,7 @@ async function saveRecibo() {
             throw new Error(result.message || 'Error al guardar el recibo - Presione F5');
         }
         
-        showStatusMessage('Recibo guardado exitosamente!', 'success');
+        showStatusMessage('Recibo guardado exitosamente!', 'success');        
         
         // Habilitar botón de imprimir
         //document.getElementById('print-btn').disabled = false;
@@ -339,7 +339,7 @@ function printRecibo() {
     
     doc.addImage(qr.toDataURL(), 'PNG', 160, 30, 30, 30);
     
-    doc.text("¡Gracias por su preferencia!", 105, 120, null, null, 'center');
+    doc.text("¡EDUCAR ES NUESTRA PASIÓN!", 105, 120, null, null, 'center');
     
     doc.save(`Recibo_${numeroRecibo}.pdf`);
 }
