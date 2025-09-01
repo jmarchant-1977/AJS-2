@@ -137,11 +137,11 @@ try {
             ]);
             break;
         case 'get_recibo_id':
-            // Obtener un recibo específico por nu
+            // Obtener un recibo específico por número de recibo
             $numero_recibo = $_GET['numero_recibo'] ?? 0;
             
             $stmt = $conn->prepare("SELECT * FROM recibos WHERE numero_recibo = :numero_recibo");
-            $stmt->execute([':numero_recibo' => $id]);
+            $stmt->execute([':numero_recibo' => $numero_recibo]);
             $recibo = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if (!$recibo) {

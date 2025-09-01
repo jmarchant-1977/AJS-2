@@ -775,12 +775,12 @@ async function imprimirRecibo_viejo(reciboId) {
 }
 
 // Función para imprimir directamente
-function print_it(reciboId) {
-    console.log("Iniciando impresión directa para recibo:", reciboId);
+// function print_it(reciboId) {
+//     console.log("Iniciando impresión directa para recibo:", reciboId);
     
-    // Llamar a la función existente pero con un callback para imprimir
-    imprimirRecibo(reciboId, true);
-}
+//     // Llamar a la función existente pero con un callback para imprimir
+//     imprimirRecibo(reciboId, true);
+// }
 
 // Modificación de la función imprimirRecibo para aceptar impresión directa
 async function imprimirRecibo(reciboId, imprimirDirecto = false) {
