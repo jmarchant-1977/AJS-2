@@ -945,7 +945,7 @@ function imprimirPDF(doc) {
                         try {
                             // Intentar imprimir
                             iframe.contentWindow.print();
-                            
+                            console.log("Abrio ventana de impresión.");
                             //Limpiar después de imprimir
                             setTimeout(() => {
                                 document.body.removeChild(iframe);
