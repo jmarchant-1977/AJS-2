@@ -223,19 +223,18 @@ function mostrarRecibos(recibos) {
         "headerCallback": function(thead, data, start, end, display) {
             $(thead).find('th').css('font-size', '0.7rem');
         },
-        pageLength: 5,
+        pageLength: 10,
         lengthMenu: [5, 10, 20, 50],
         dom: '<"top"lf>rt<"bottom"ip>'
     });
     
-    // Agregar evento para botones de imprimir
-    document.querySelectorAll('.btn-imprimir').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const reciboId = this.getAttribute('data-id');
-            imprimirRecibo(reciboId);
-        });
+    // ✅ EVENTO DELEGADO PARA BOTONES DE IMPRIMIR (funciona en todas las páginas)
+    $('#tabla-recibos').on('click', '.btn-imprimir', function() {
+        const reciboId = $(this).data('id');
+        imprimirRecibo(reciboId);
     });
-    
+        
+    console.log("DataTable inicializada", table);
     return table;
 }
 
