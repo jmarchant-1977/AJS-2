@@ -15,7 +15,29 @@ async function get_usuario_Estacion () {
     return localStorage.getItem('_usuarioEstacion');
 }
 
+setTimeout(() => {
+    const inputAlumno = document.getElementById('cedula');
+    const btnBuscarAlumno = document.getElementById('btn-buscar-alumno');
+    
+    console.log("Input alumno:", inputAlumno); // Para debug
+    console.log("Btn buscar:", btnBuscarAlumno); // Para debug
+    
+    if (btnBuscarAlumno && typeof manejadorEstudiantes !== 'undefined') {
+        btnBuscarAlumno.addEventListener('click', () => {
+            manejadorEstudiantes.mostrarModal((textoAlumno) => {
+                inputAlumno.value = textoAlumno;
+                updateReciboPreview();
+            });
+        });
+        console.log("Event listener agregado correctamente");
+    } else {
+        console.log("BtnBuscarAlumno no encontrado o manejadorEstudiantes no definido");
+    }
+}, 100); // Pequeño delay para asegurar que el DOM esté completamente cargado
+
 document.addEventListener('DOMContentLoaded', function() {
+    
+
     // Configurar fecha predeterminada (hoy)
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('fecha-recibo').value = today;
@@ -28,10 +50,29 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Configurar contador de caracteres
     setupCharCounter();
-
-    // Obteber Usuario de la maquina en uso
-    // getUsuauarioEstacion();
+    console.log("manejadorEstudiantes:", typeof manejadorEstudiantes); // Verificar si manejadorEstudiantes está definido
     
+    // Configurar manejador de estudiantes si está disponible
+    if (typeof manejadorEstudiantes !== 'undefined') {
+        // Configurar callback para cuando se seleccione un alumno
+        const inputAlumno = document.getElementById('cedula');
+        const btnBuscarAlumno = document.getElementById('btn-buscar-alumno');
+        
+        console.log("manejadorEstudiantes disponible");
+        console.log("inputAlumno:", inputAlumno);
+        console.log("btnBuscarAlumno:", btnBuscarAlumno);   
+
+        if (btnBuscarAlumno) {
+            btnBuscarAlumno.addEventListener('click', () => {
+                manejadorEstudiantes.mostrarModal((textoAlumno) => {
+                    inputAlumno.value = textoAlumno;
+                    updateReciboPreview();
+                });
+            });
+        }
+    }
+
+
     // Configurar eventos
     document.getElementById('submit-btn').addEventListener('click', saveRecibo);
     document.getElementById('print-btn').addEventListener('click', imprimirRecibo);
@@ -50,6 +91,8 @@ document.addEventListener('DOMContentLoaded', function() {
     ['nombre-cliente', 'cedula', 'rubro', 'forma-pago', 'referencia','descripcion', 'monto'].forEach(id => {
         document.getElementById(id).addEventListener('input', updateReciboPreview);
     });
+
+
 });
 
 

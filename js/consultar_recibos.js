@@ -1,10 +1,7 @@
-// Guardar el nombre de usuario
-   //sessionStorage.setItem('usuarioEstacion', 'jmarchante');
 
-   // Obtener el nombre de usuario
-   //let usuarioEstacion = sessionStorage.getItem('usuarioEstacion');
-   //console.log(nombreUsuario); // Imprime: usuarioEjemplo
+// js/consultar_recibos.js
 
+// Esperar a que el DOM esté completamente cargado
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM cargado');
     console.log('Elemento fecha-inicio:', document.getElementById('fecha-inicio'));
@@ -12,11 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
     //console.log("Usuario estacion es: ",usuarioEstacion);
     const fechaInicioInput = document.getElementById('fecha-inicio');
     const fechaFinInput = document.getElementById('fecha-fin');
-    //const usuarioEstacion = document.getElementById('usuario-reporte');
-
-    // usuarioEstacion.value = sessionStorage.getItem('usuarioEstacion');
-
-        
+  
     
     if (!fechaInicioInput || !fechaFinInput) {
         console.error('No se encontraron los inputs de fecha');
@@ -63,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Evento para exportar a Excel
     document.getElementById('btn-exportar').addEventListener('click', exportarExcel);
 });
-
+// Función para cargar recibos desde la API
 async function cargarRecibos(fechaInicio, fechaFin, mesControl = '', estado = '') {
     const fechaInicioStr = fechaInicio ? fechaInicio.toISOString().split('T')[0] : '';
     const fechaFinStr = fechaFin ? fechaFin.toISOString().split('T')[0] : '';
@@ -100,7 +93,7 @@ async function cargarRecibos(fechaInicio, fechaFin, mesControl = '', estado = ''
         showStatusMessage('Error al cargar recibos: ' + error.message, 'error');
     }
 }
-
+// Función para mostrar los recibos en la tabla
 function mostrarRecibos(recibos) {
     const tablaBody = document.getElementById('tabla-body');
     
@@ -223,7 +216,7 @@ function mostrarRecibos(recibos) {
         "headerCallback": function(thead, data, start, end, display) {
             $(thead).find('th').css('font-size', '0.7rem');
         },
-        pageLength: 10,
+        pageLength: 5,
         lengthMenu: [5, 10, 20, 50],
         dom: '<"top"lf>rt<"bottom"ip>'
     });
@@ -237,79 +230,7 @@ function mostrarRecibos(recibos) {
     console.log("DataTable inicializada", table);
     return table;
 }
-
-
-async function imprimirRecibo_RES(reciboId) {
-    // recibo tamaño CARTA
-    try {
-        const response = await fetch(`./apis/api_recibos.php?action=get_recibo&id=${reciboId}`);
-        const data = await response.json();
-        
-        if (data.error) {
-            throw new Error(data.error);
-        }
-        
-        const recibo = data.data;
-        
-        // Generar PDF similar a la función printRecibo pero con datos del recibo
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        const qr = new QRious({ 
-            value: JSON.stringify({
-                numero: recibo.numero_recibo,
-                fecha: recibo.fecha,
-                cliente: recibo.nombre_cliente,
-                monto: recibo.monto,
-                forma_pago: recibo.forma_pago
-            }), 
-            size: 50 
-        });
-        
-        doc.setFontSize(14);
-        doc.text("RECIBO DE PAGO", 105, 20, null, null, 'center');
-        doc.setFontSize(10);
-        doc.text(`N° ${recibo.numero_recibo}`, 105, 28, null, null, 'center');
-        
-        const fechaFormatted = new Date(recibo.fecha).toLocaleDateString('es-ES');
-        
-        doc.setFontSize(11);
-        doc.text(`Fecha: ${fechaFormatted}`, 20, 40);
-        doc.text(`Cliente: ${recibo.nombre_cliente}`, 20, 48);
-        doc.text(`Alumno: ${recibo.cedula}`, 20, 56);
-        doc.text(`Rubro: ${recibo.rubro}`, 20, 64);
-        doc.text(`Forma de Pago: ${recibo.forma_pago}`, 20, 72);
-        doc.text(`Referencia: ${recibo.referencia}`, 20, 80);
-        doc.text(`Descripción: ${recibo.descripcion}`, 20, 88);
-        //doc.text(`Monto: Bs. ${recibo.monto}`, 20, 96);
-        
-        console.log("Valor recibo.monto: ",recibo.monto);
-        const montoNumerico =  parseFloat(String(recibo.monto).replace(/[^\d.,-]/g, '').replace(',', '.')) || 0;
-
-        doc.text(`Monto: ${montoNumerico.toLocaleString('es-VE', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            })}`, 20, 96);
-        console.log("Valor recibo.monto: ",recibo.monto);
-        console.log("Valor monto 2: ",montoNumerico);
-        console.log("Valor monto 3: ",montoNumerico.toLocaleString('es-VE', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            }));
-        
-        doc.addImage(qr.toDataURL(), 'PNG', 160, 30, 30, 30);
-        doc.addImage('./img/logo.jpg', 'JPG', 20, 5, 25, 25);
-        
-        doc.text("¡Gracias por su preferencia!", 105, 120, null, null, 'center');
-        
-        doc.save(`Recibo_${recibo.numero_recibo}.pdf`);
-        
-    } catch (error) {
-        console.error('Error:', error);
-        showStatusMessage('Error al generar PDF: ' + error.message, 'error');
-    }
-}
-
+// Función para cargar imagen y aplicar opacidad
 function loadImageWithOpacity(imagePath, opacity) {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -326,8 +247,7 @@ function loadImageWithOpacity(imagePath, opacity) {
         img.src = imagePath;
     });
 }
-
-    //recibo tamaño CARTA
+//recibo tamaño CARTA
 async function imprimirRecibo_RES_carta(reciboId) {
 
 
@@ -531,10 +451,8 @@ async function imprimirRecibo_RES_carta(reciboId) {
         showStatusMessage('Error al generar PDF: ' + error.message, 'error');
     }
 }
-
- //recibo tamaño pequeño Papel Termico  (80mm x aprox. 100mm)
-
 async function imprimirRecibo(reciboId) {
+     //recibo tamaño pequeño Papel Termico  (80mm x aprox. 100mm)
     console.log("Entró a imprimir directamente");
     try {
         const response = await fetch(`./apis/api_recibos.php?action=get_recibo&id=${reciboId}`);
@@ -617,8 +535,6 @@ async function imprimirRecibo(reciboId) {
             { label: "Descripción:", value: recibo.descripcion },
             { label: "Forma Pago:", value: recibo.forma_pago },
             { label: "Monto: ", value: montoFormatted },
-            //{ label: "Monto2: ", value: parseInt(recibo.monto)*recibo.tasa }, 
-            
             { label: "Ref: ", value: recibo.referencia || 'N/A' }, 
             { label: "Admin.:", value: recibo.usuario }
         ];
@@ -649,204 +565,95 @@ async function imprimirRecibo(reciboId) {
         doc.setFontSize(7);
         doc.text("¡Educar es nuestra pasión!", 30, currentY, { align: 'center' });
 
-        // ✅ NUEVO CÓDIGO: Imprimir directamente
+        // ✅ NUEVO CÓDIGO: Imprimir directamente con manejo de errores
         console.log("Generando PDF para impresión directa...", recibo);
 
         const pdfBlob = doc.output('blob');
         const url = URL.createObjectURL(pdfBlob);
 
+        // Intentar abrir ventana para imprimir
         const printWindow = window.open(url, '_blank');
-
-        printWindow.onload = function() {
-            setTimeout(() => {
-                try {
-                    printWindow.print();
-                    setTimeout(() => {
-                        //printWindow.close();
-                        URL.revokeObjectURL(url);
-                    }, 10);
-                } catch (error) {
-                    console.error('Error al imprimir:', error);
-                    // Fallback: descargar el PDF
-                    doc.save(`R-${recibo.numero_recibo}.pdf`);
-                    printWindow.close();
-                    URL.revokeObjectURL(url);
-                }
-            }, 10);
-        };
-
-        printWindow.onerror = function() {
-            console.error('Error al abrir ventana de impresión');
+        
+        // ✅ MANEJO DE ERRORES MEJORADO: Verificar si la ventana se abrió correctamente
+        if (!printWindow) {
+            console.warn('Ventana emergente bloqueada. Descargando PDF en su lugar...');
             doc.save(`R-${recibo.numero_recibo}.pdf`);
             URL.revokeObjectURL(url);
-        };
+            showStatusMessage('La ventana emergente fue bloqueada. El recibo se ha descargado.', 'info');
+            return;
+        }
+
+        // ✅ MANEJO SEGURO de eventos de la ventana
+        try {
+            printWindow.onload = function() {
+                setTimeout(() => {
+                    try {
+                        printWindow.print();
+                        // Cerrar ventana después de imprimir (con retraso para asegurar)
+                        setTimeout(() => {
+                            // if (!printWindow.closed) {
+                            //     printWindow.close();
+                            // }
+                            URL.revokeObjectURL(url);
+                            console.log('Impresión iniciada y ventana cerrada.');
+                        }, 500);
+                    } catch (printError) {
+                        console.error('Error al imprimir:', printError);
+                        // Fallback: descargar el PDF y cerrar ventana
+                        doc.save(`R-${recibo.numero_recibo}.pdf`);
+                        if (!printWindow.closed) {
+                            printWindow.close();
+                        }
+                        URL.revokeObjectURL(url);
+                        showStatusMessage('Error al imprimir. El recibo se ha descargado.', 'error');
+                    }
+                }, 100);
+            };
+
+            printWindow.onerror = function() {
+                console.error('Error al cargar la ventana de impresión');
+                doc.save(`R-${recibo.numero_recibo}.pdf`);
+                URL.revokeObjectURL(url);
+                showStatusMessage('Error al abrir ventana de impresión. El recibo se ha descargado.', 'error');
+            };
+
+            // ✅ MANEJO PARA NAVEGADORES QUE NO FIRAN onload PARA BLOBs
+            // Algunos navegadores no disparan onload para URLs de blob
+            setTimeout(() => {
+                if (printWindow.document.readyState === 'complete' && 
+                    typeof printWindow.onload !== 'function') {
+                    // Disparar manualmente la impresión si la ventana está lista
+                    try {
+                        printWindow.print();
+                        setTimeout(() => {
+                            // if (!printWindow.closed) {
+                            //     printWindow.close();
+                            // }
+                            URL.revokeObjectURL(url);
+                        }, 500);
+                    } catch (error) {
+                        console.error('Error en impresión tardía:', error);
+                        doc.save(`R-${recibo.numero_recibo}.pdf`);
+                        if (!printWindow.closed) {
+                            printWindow.close();
+                        }
+                        URL.revokeObjectURL(url);
+                    }
+                }
+            }, 1000);
+
+        } catch (windowError) {
+            console.error('Error al configurar eventos de ventana:', windowError);
+            doc.save(`R-${recibo.numero_recibo}.pdf`);
+            URL.revokeObjectURL(url);
+            showStatusMessage('Error técnico. El recibo se ha descargado.', 'error');
+        }
         
     } catch (error) {
         console.error('Error:', error);
         showStatusMessage('Error al generar PDF: ' + error.message, 'error');
     }
 }
-
-// async function imprimirRecibo(reciboId) {
-   
-//     try {
-//         const response = await fetch(`./apis/api_recibos.php?action=get_recibo&id=${reciboId}`);
-//         const data = await response.json();
-        
-//         if (data.error) {
-//             throw new Error(data.error);
-//         }
-        
-//         const recibo = data.data;
-//         const { jsPDF } = window.jspdf;
-        
-//         // Configurar página en tamaño estrecho (58mm x aprox. 100mm)
-//         const doc = new jsPDF({
-//             orientation: 'portrait',
-//             unit: 'mm',
-//             format: [58, 100] // Ancho 80mm (típico para impresoras térmicas), alto variable
-//         });
-
-//         // Escalar todo el contenido al 70% del tamaño original
-//         const scaleFactor = 0.7;
-//         doc.scale(scaleFactor, scaleFactor);
-        
-//         // Ajustar todas las posiciones y tamaños multiplicando por 1/scaleFactor
-//         const baseX = 5;
-//         let currentY = 15;
-
-//         // Estilos reducidos
-//         doc.setFont('helvetica', 'bold');
-//         doc.setFontSize(11); // Tamaño reducido
-//         doc.setTextColor('#000000'); // Negro puro para mejor legibilidad térmica
-//         doc.text("RECIBO DE PAGO", 40, currentY, { align: 'center' });
-//         currentY += 5;
-
-//         // Número de recibo
-//         doc.setFontSize(9);
-//         doc.setTextColor('#000000');
-//         doc.text(`N° ${recibo.numero_recibo}`, 40, currentY, { align: 'center' });
-//         currentY += 10;
-//         // Agregar línea horizontal después del número de recibo
-//         doc.setDrawColor(100); // Color gris para la línea
-//         doc.setLineWidth(0.5); // Grosor de la línea
-//         //doc.line(10, 32, 360, 32); // (x1, y1, x2, y2) - Ajusta las coordenadas según necesidad
-//         doc.line(5, 28, 75, 28); // (x1, y1, x2, y2) - Desde 20 (inicio fecha) hasta 190 (final QR)
-
-//         // Eliminar logo para ahorrar espacio si es necesario
-//         doc.addImage('./img/logo.jpg', 'JPG', baseX, 35, 15, 15);
-
-//         // Configuración de tabla compacta
-//         const cellHeight = 4;
-//         const leftColWidth = 25;
-//         const rightColWidth = 65;
-
-//         // Función optimizada para impresión térmica
-//         const drawThermalCell = (x, y, width, height, text, isHeader = false) => {
-//             doc.setDrawColor(0);
-//             doc.setFillColor(255); // Fondo blanco (mejor para térmicas)
-//             doc.rect(x, y, width, height, 'F'); // Rectángulo simple sin bordes redondeados
-            
-//             doc.setTextColor(0);
-//             doc.setFontSize(6);
-//             doc.text(text, x + 1, y + height/2 + 2);
-//         };
-
-//         const montoFormatted = `${recibo.monto.toLocaleString('es-VE', {
-//             minimumFractionDigits: 2,
-//             maximumFractionDigits: 2
-//         })}`;
-//         // Datos esenciales solamente
-//         const essentialData = [
-//             { label: "Fecha:", value: new Date(recibo.fecha).toLocaleDateString('es-ES') },
-//             { label: "Cliente:", value: recibo.nombre_cliente.substring(0, 20) }, // Limitar longitud
-//             { label: "Alumno:", value: recibo.cedula },
-//             { label: "Rubro: ", value: recibo.rubro.substring(0, 15) },
-//             { label: "Forma Pago:", value: recibo.forma_pago },
-//             { label: "Monto: ", value: montoFormatted }
-//             // { label: "Monto: ", value: `${parseFloat(recibo.monto).toFixed(2)}` }
-//         ];
-
-//         // Dibujar tabla compacta
-//         essentialData.forEach(row => {
-//             drawThermalCell(baseX, currentY, leftColWidth, cellHeight, row.label);
-//             drawThermalCell(baseX + leftColWidth, currentY, rightColWidth, cellHeight, row.value);
-//             currentY += cellHeight;
-//         });
-
-//         currentY += 3;
-
-//         // QR más pequeño
-//         const qr = new QRious({ 
-//             value: JSON.stringify({
-//                 n: recibo.numero_recibo,
-//                 f: recibo.fecha.split(' ')[0],
-//                 m: recibo.monto,
-//                 a: recibo.cedula
-//             }), 
-//             size: 80 // Tamaño reducido
-//         });
-        
-//         doc.addImage(qr.toDataURL(), 'PNG', baseX + 10, currentY, 30, 30);
-//         currentY += 32;
-
-//         // Pie mínimo
-//         doc.setFontSize(5);
-//         doc.text("Educar es nuestra Pasión!", 40, currentY, { align: 'center' });
-
-//         // Guardar con nombre compacto
-//         doc.save(`R-${recibo.numero_recibo}.pdf`);
-        
-//     } catch (error) {
-//         console.error('Error:', error);
-//         showStatusMessage('Error al generar PDF: ' + error.message, 'error');
-//     }
-// }
-
-
-function exportarExcel_RES() {
-    // Obtener la instancia de DataTable
-    const dataTable = $('#tabla-recibos').DataTable();
-    
-    // Obtener todos los datos (incluyendo los filtrados)
-    const data = dataTable.rows({ search: 'applied' }).data().toArray();
-    
-    // Procesar los datos para Excel
-    const datosProcesados = data.map(row => ({
-        'N° Recibo': row[0],
-        'Fecha': row[1],
-        'Mes': row[2],
-        'Cliente': row[3],
-        'Alumno': row[4],
-        'Rubro': row[5],
-        'Forma Pago': row[6],
-        'Descripción': row[7],
-        'Monto': parseFloat(row[8].replace(/[^\d,]/g, '').replace(/\./g, '').replace(',', '.')),
-        'Estado': row[9]
-    }));
-    
-    // Crear hoja de cálculo
-    const ws = XLSX.utils.json_to_sheet(datosProcesados);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Recibos");
-    
-    // Formato de moneda para la columna Monto
-    const range = XLSX.utils.decode_range(ws['!ref']);
-    for (let R = range.s.r + 1; R <= range.e.r; ++R) {
-        const cell = XLSX.utils.encode_cell({r: R, c: 8}); // Columna I (Monto)
-        if (ws[cell]) {
-            // ws[cell].z = '#,##0.00;[Red]#,##0.00';
-            ws[cell].z = '#,0.00;[Red]#,0.00';
-            if (typeof ws[cell].v === 'number') {
-                ws[cell].v = parseFloat(ws[cell].v.toFixed(2));
-            }
-        }
-    }
-    
-    XLSX.writeFile(wb, `Recibos_${new Date().toISOString().slice(0,10)}.xlsx`);
-}
-
-
 function exportarExcel() {
     // Obtener la instancia de DataTable
     const dataTable = $('#tabla-recibos').DataTable();
@@ -893,7 +700,6 @@ function exportarExcel() {
     
     XLSX.writeFile(wb, `Recibos_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
-
 function showStatusMessage(message, type = 'info') {
     // Eliminar cualquier popup existente
     const existingPopup = document.getElementById('custom-status-popup');
