@@ -37,8 +37,24 @@ class ManejadorEstudiantes {
                             <label for="filtro-grado">Grado:</label>
                             <select id="filtro-grado" class="form-input">
                                 <option value="">Todos</option>
-                                <option value="4A">4TO AÑO</option>
-                                <option value="5A">5TO AÑO</option>
+                                <!-- NIVELES -->
+                                <option value="1ER N">1ER NIVEL</option>
+                                <option value="2DO N">2DO NIVEL</option>
+                                
+                                <!-- GRADOS -->
+                                <option value="1ER G">1ER GRADO</option>
+                                <option value="2DO G">2DO GRADO</option>
+                                <option value="3ER G">3ER GRADO</option>
+                                <option value="4TO G">4TO GRADO</option>
+                                <option value="5TO G">5TO GRADO</option>
+                                <option value="6TO G">6TO GRADO</option>
+                                
+                                <!-- AÑOS -->
+                                <option value="1ER A">1ER AÑO</option>
+                                <option value="2DO A">2DO AÑO</option>
+                                <option value="3ER A">3ER AÑO</option>
+                                <option value="4TO A">4TO AÑO</option>
+                                <option value="5TO A">5TO AÑO</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -136,7 +152,8 @@ class ManejadorEstudiantes {
             }
             
             const data = await response.json();
-            
+            console.log("Datos recibidos de estudiantes:", data);
+
             if (data.error) {
                 throw new Error(data.error);
             }
@@ -180,11 +197,11 @@ class ManejadorEstudiantes {
                         className: 'dt-left'
                     },
                     { 
-                        data: 'id_grado_cursa',
-                        render: function(data) {
-                            return data && data.includes('4') ? '4TO AÑO' : '5TO AÑO';
-                        },
-                        className: 'dt-center'
+                            data: 'desc_grado_cursa',
+                            render: function(data) {
+                                return data ? data.split(' - ')[0] : '';
+                            },
+                            className: 'dt-center'
                     },
                     { 
                         data: 'id_grado_cursa',
@@ -254,7 +271,7 @@ class ManejadorEstudiantes {
             function(settings, data, dataIndex) {
                 const gradoData = data[2]; // Columna del grado
                 const seccionData = data[3]; // Columna de la sección
-                
+                console.log("Filtrando por grado:", grado, "y sección:", seccion);
                 let coincideGrado = true;
                 let coincideSeccion = true;
                 

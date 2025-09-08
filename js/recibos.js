@@ -7,8 +7,11 @@ const COLORS = {
 };
 
 
-const usuarioEstacion = localStorage.getItem('_usuarioEstacion');
-console.log("Usuario Estacion Recibos.js: ", usuarioEstacion);
+const usuarioAutenticado = localStorage.getItem('usuarioAutenticado');
+const usuarioEstacion = JSON.parse(usuarioAutenticado);
+console.log("Usuario Estacion Recibos.js: ", usuarioEstacion.nombre);
+
+
 let tasaActual = 0;
 
 async function get_usuario_Estacion () {
@@ -267,11 +270,11 @@ async function saveRecibo() {
     const referencia = document.getElementById('referencia').value;
     const descripcion = document.getElementById('descripcion').value;
     const monto = parseCurrency(document.getElementById('monto').value);
-    const usuario = usuarioEstacion || 'desconocido';
+    const usuario = usuarioEstacion.nombre || 'desconocido';
     const tasa = tasaActual;
     
     // Validaciones básicas
-    if (!nombre || !cedula || !rubro || !formaPago || !descripcion || monto <= 0) {
+    if (!nombre || !cedula || !rubro || !formaPago || !descripcion|| !referencia || monto <= 0) {
         showStatusMessage('Por favor complete todos los campos requeridos','info');
         return;
     }
