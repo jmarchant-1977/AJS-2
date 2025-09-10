@@ -28,9 +28,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function cargarEstudiantes(grado = '', seccion = '', sexo = '') {
+    console.log('Cargando estudiantes con filtros:', { grado, seccion, sexo });
     try {
         const response = await fetch('./apis/api_recibos.php?action=get_estudiantes');
         const data = await response.json();
+        console.log('Datos recibidos:', data);
         
         if (data.error) {
             throw new Error(data.error);
@@ -40,7 +42,7 @@ async function cargarEstudiantes(grado = '', seccion = '', sexo = '') {
         let estudiantesFiltrados = data.data;
         
         if (grado) {
-            estudiantesFiltrados = estudiantesFiltrados.filter(e => e.id_grado_cursa.startsWith(grado));
+            estudiantesFiltrados = estudiantesFiltrados.filter(e => e.desc_grado_cursa.startsWith(grado));
         }
         
         if (seccion) {
@@ -84,7 +86,7 @@ function mostrarEstudiantes(estudiantes) {
         }
         
         // Separar grado y sección
-        const [grado, seccion] = estudiante.id_grado_cursa.split('-');
+        const [grado, seccion] = estudiante.desc_grado_cursa.split('-');
         
         row.innerHTML = `
             <td>${estudiante.cedula}</td>
@@ -92,8 +94,8 @@ function mostrarEstudiantes(estudiantes) {
             <td>${new Date(estudiante.fecha_nac).toLocaleDateString('es-ES')}</td>
             <td>${edad} años</td>
             <td>${estudiante.sexo === 'M' ? 'Masculino' : 'Femenino'}</td>
-            <td>${grado.includes('4') ? '4TO' : '5TO'} AÑO</td>
-            <td>SECC-${seccion}</td>
+            <td>${grado ? grado.split(' - ')[0] : ''}</td> 
+            <td>${seccion}</td>
             <td class="acciones">
                 <button class="btn-accion btn-subir" data-id="${estudiante.id}" title="Subir documentos">
                     <i class="fas fa-upload"></i>

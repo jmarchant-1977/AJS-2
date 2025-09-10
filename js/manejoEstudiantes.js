@@ -175,7 +175,8 @@ class ManejadorEstudiantes {
         // Destruir DataTable si ya existe
         if ($.fn.DataTable.isDataTable('#tabla-modal-estudiantes')) {
             this.dataTable.destroy();
-            $('#tabla-modal-estudiantes').empty();
+            // $('#tabla-modal-estudiantes').empty(); // Limpiar toda la tabla
+            $('#tabla-modal-estudiantes tbody').empty(); // Limpiar solo el cuerpo de la tabla
         }
 
         // Verificar que hay datos
@@ -221,6 +222,29 @@ class ManejadorEstudiantes {
                         className: 'dt-center'
                     }
                 ],
+                createdRow: function(row, data, dataIndex) {
+                // Tamaño de letra y altura para el body
+                $(row).css({
+                    'font-size': '12px',
+                    'height': '5px'  // Altura de cada fila
+                });
+                },
+                headerCallback: function(thead, data, start, end, display) {
+                    // Tamaño de letra para el head
+                    $(thead).find('th').css({
+                        'font-size': '12px',
+                        'font-weight': 'bold',
+                        'height': '10px'  // Altura del encabezado
+                    });
+                },
+
+                initComplete: function(settings, json) {
+                    // Enfocar el input de búsqueda después de inicializar
+                    setTimeout(function() {
+                        $('.dataTables_filter input').focus();
+                    }, 100);
+                },
+
                 language: {
                     "decimal": "",
                     "emptyTable": "No hay estudiantes disponibles",

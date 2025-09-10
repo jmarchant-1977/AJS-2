@@ -279,6 +279,10 @@ async function saveRecibo() {
         return;
     }
     
+    if (!tasa || tasa <= 0) {
+        showStatusMessage('La tasa debe ser un monto Valido...!','info');
+        return;
+    }
     // Obtener mes de control (YYYY-MM)
     const fechaObj = new Date(fecha);
     const mesControl = `${fechaObj.getFullYear()}-${(fechaObj.getMonth() + 1).toString().padStart(2, '0')}`;
