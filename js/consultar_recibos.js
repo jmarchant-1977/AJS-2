@@ -131,7 +131,7 @@ function mostrarRecibos(recibos) {
             <td>${fechaFormateada}</td>
             <td>${recibo.mes_control}</td>
             <td>${recibo.nombre_cliente}</td>
-            <td>${recibo.cedula}</td>
+            <td>${recibo.nombre_est}</td>
             <td>${recibo.rubro}</td>
             <td>${recibo.forma_pago}</td>
             <td>${recibo.descripcion}</td>
@@ -358,7 +358,7 @@ async function imprimirRecibo_RES_carta(reciboId) {
             const tableData = [
                 { label: "Fecha", value: fechaFormatted },
                 { label: "Representante", value: recibo.nombre_cliente },
-                { label: "Alumno", value: recibo.cedula },
+                { label: "Alumno", value: recibo.nombre_est },
                 { label: "Rubro", value: recibo.rubro },
                 { label: "Forma de Pago", value: recibo.forma_pago },
                 { label: "Referencia", value: recibo.referencia || 'N/A' },
@@ -465,6 +465,7 @@ async function imprimirRecibo(reciboId) {
         const recibo = data.data;
         const { jsPDF } = window.jspdf;
         
+        console.log("Data recibo xxx: ", recibo);
         // Configurar página en tamaño estrecho (80mm x aprox. 100mm)
         const doc = new jsPDF({
             orientation: 'portrait',
@@ -501,8 +502,8 @@ async function imprimirRecibo(reciboId) {
         doc.line(5, 28, 53, 28); // (x1, y1, x2, y2) - Desde 20 (inicio fecha) hasta 190 (final QR)
 
         // Configuración de tabla compacta
-        const cellHeight = 5;
-        const leftColWidth = 20;
+        const cellHeight = 4.5;
+        const leftColWidth = 13;
         const rightColWidth = 65;
 
         // Función optimizada para impresión térmica
@@ -527,23 +528,54 @@ async function imprimirRecibo(reciboId) {
                 label: "Fecha:", value: (() => {
                 const d = new Date(recibo.fecha + 'T00:00:00Z');
                 return `${d.getUTCDate().toString().padStart(2, '0')}/${(d.getUTCMonth() + 1).toString().padStart(2, '0')}/${d.getUTCFullYear()}`;
-                })() 
+                })(), index:0 
             },
-            { label: "Cliente:", value: recibo.nombre_cliente.substring(0, 30) },
-            { label: "Alumno:", value: recibo.cedula },
-            { label: "Rubro: ", value: recibo.rubro.substring(0, 30) },
-            { label: "Descripción:", value: recibo.descripcion },
-            { label: "Forma Pago:", value: recibo.forma_pago },
-            { label: "Monto: ", value: montoFormatted },
-            { label: "Ref: ", value: recibo.referencia || 'N/A' }, 
-            { label: "Admin.:", value: recibo.usuario }
+            { label: "Cliente:", value: recibo.nombre_cliente.substring(0, 30),index:1 },
+            { label: "Alumno :", value: recibo.nombre_est,index:2 },
+            { label: "Descrip:", value: recibo.descripcion,index:3 },
+            { label: "F. Pago:", value: recibo.forma_pago,index:4 },
+            { label: "Rubro  :", value: recibo.rubro.substring(0, 30),index:5 },
+            { label: "Monto  :", value: montoFormatted,index:6 },
+            { label: "Ref    :", value: recibo.referencia || 'N/A',index:7 }, 
+            { label: "Admin. :", value: recibo.usuario,index:8 }
         ];
 
         // Dibujar tabla compacta
-        essentialData.forEach(row => {
-            drawThermalCell(baseX, currentY, leftColWidth, cellHeight, row.label);
-            drawThermalCell(baseX + leftColWidth, currentY, rightColWidth, cellHeight, row.value);
-            currentY += cellHeight;
+        // essentialData.forEach(row => {
+        //     drawThermalCell(baseX, currentY, leftColWidth, cellHeight, row.label);
+        //     console.log("row: ", row, "row.label: ", row.label);
+        //     if (row.index==2) currentY += cellHeight;
+        //     drawThermalCell(baseX + leftColWidth, currentY, rightColWidth, cellHeight, row.value);
+        //     currentY += cellHeight;
+        // });
+        
+        // Dibujar tabla compacta
+        essentialData.forEach((row, index) => {
+            console.log("row: ", row, "row.label: ", row.label, "index: ", index);
+            // drawThermalCell(baseX, currentY, leftColWidth, cellHeight, row.label);
+            if (index === 2 || index === 3) {
+                
+                // Para las filas 2 y 3, combinar en una sola celda que ocupe todo el ancho
+                    console.log("row 2-3: ", row);
+                    // Solo procesar la fila 2, la 3 se omite
+                    const combinedWidth = leftColWidth + rightColWidth;
+                    const combinedValue = `${essentialData[2].value} ${essentialData[3].value}`;
+                    doc.setFont("helvetica", "bold");
+                    drawThermalCell(baseX, currentY, combinedWidth, cellHeight, row.label);
+                    currentY += cellHeight;
+                    doc.setFont("helvetica", "normal");
+                    drawThermalCell(baseX, currentY, combinedWidth, cellHeight, row.value);
+                    currentY += cellHeight;
+                
+                // La fila 3 (index === 3) se salta completamente
+            } else {
+                // Para las demás filas, comportamiento normal
+                doc.setFont("helvetica", "bold");
+                drawThermalCell(baseX, currentY, leftColWidth, cellHeight, row.label);
+                doc.setFont("helvetica", "normal");
+                drawThermalCell(baseX + leftColWidth, currentY, rightColWidth, cellHeight, row.value);
+                currentY += cellHeight;
+            }
         });
 
         currentY += 3;

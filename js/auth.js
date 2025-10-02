@@ -15,7 +15,8 @@ $(document).ready(function() {
     
     // Definir permisos por rol
     const permisos = {
-        'administrador': ['index.html', 'consultar_recibos.html', 'reportes.html', 'estudiantes.html'],
+        'administrador': ['index.html', 'consultar_recibos.html', 'reportes.html', 
+                        'estudiantes.html','tabla_estudiantil.html','cargar_estudiantes.html'],
         'cajero': ['index.html', 'consultar_recibos.html', 'reportes.html'],
         'consulta': ['consultar_recibos.html', 'reportes.html'],
         'reportes': ['reportes.html'],

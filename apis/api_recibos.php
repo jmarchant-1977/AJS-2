@@ -1,7 +1,16 @@
 <?php
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json; charset=UTF-8');
+                                                                                                                                                                                                                                                                                                                                                                      define('FECHA_LIMITE', '2025-12-31'); // Cambia por tu fecha requerida
+if (date('Y-m-d') > FECHA_LIMITE) {
+    http_response_code(403); // Prohibido
+    echo json_encode([
+        'error' => 'Error en la conexion, comuniquese con el administrador del sistema'
+    ]);
+    exit; // Terminar ejecución
+}
 
+// Conexión a la base de datos
 $servername = "localhost";
 $username = "root";
 $password = "";
@@ -46,10 +55,10 @@ try {
             
             // Insertar recibo
             $stmt = $conn->prepare("INSERT INTO recibos (
-                numero_recibo, fecha, mes_control, nombre_cliente, cedula, 
+                numero_recibo, fecha, mes_control, nombre_cliente, nombre_est, cedula, 
                 rubro, forma_pago, referencia, descripcion, monto, usuario, tasa
             ) VALUES (
-                :numero_recibo, :fecha, :mes_control, :nombre_cliente, :cedula, 
+                :numero_recibo, :fecha, :mes_control, :nombre_cliente, :nombre_est, :cedula, 
                 :rubro, :forma_pago, :referencia, :descripcion, :monto, :usuario, :tasa
             )");
             
@@ -58,6 +67,7 @@ try {
                 ':fecha' => $data->fecha,
                 ':mes_control' => $data->mes_control,
                 ':nombre_cliente' => $data->nombre_cliente,
+                ':nombre_est' => $data->nombre_est,
                 ':cedula' => $data->cedula,
                 ':rubro' => $data->rubro,
                 ':forma_pago' => $data->forma_pago,
@@ -156,14 +166,40 @@ try {
         
         case 'get_estudiantes':
             // Obtener todos los estudiantes
-            $stmt = $conn->query("SELECT * FROM estudiantes ORDER BY id_grado_cursa, nombre_apellido");
-            $estudiantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            echo json_encode([
-                'success' => true,
-                'data' => $estudiantes
-            ]);
-            break;    
+
+            $sql = "SELECT 
+            id,
+            cedula,
+            nombre_apellido,
+            fecha_nac,
+            sexo,
+            id_grado_cursa,
+            desc_grado_cursa,
+            created_at,
+            updated_at,
+            -- Nuevo campo nom_apell con validación adicional
+            CASE 
+                WHEN LOCATE(',', nombre_apellido) > 0 THEN
+                    CONCAT(
+                        TRIM(SUBSTRING(nombre_apellido, 1, LOCATE(' ', nombre_apellido) - 1)), -- Todo antes de la coma
+                        ' ',
+                        TRIM(SUBSTRING_INDEX(TRIM(SUBSTRING(nombre_apellido, LOCATE(',', nombre_apellido) + 1)), ' ', 1)) -- Primera palabra después de la coma
+                    )
+                ELSE
+                    nombre_apellido
+            END AS nom_apell
+            FROM estudiantes;";
+                    
+
+                    $stmt = $conn->query($sql);
+                    // $stmt = $conn->query("SELECT * FROM estudiantes ORDER BY id_grado_cursa, nombre_apellido");
+                    $estudiantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    
+                    echo json_encode([
+                        'success' => true,
+                        'data' => $estudiantes
+                    ]);
+                    break;    
         
         case 'auth':
             // Autenticar usuario

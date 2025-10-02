@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AJS - Cargar Estudiantes</title>
+    <link rel="icon" href="./img/logo-ico.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="./css/styles.css">
+    <link rel="stylesheet" href="./css/styles_popup.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--black);
+        }
+        
+        .upload-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .upload-card {
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            background-color: var(--dark-gray);
+            border: 1px solid var(--medium-gray);
+            text-align: center;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            color: var(--yellow);
+            margin-bottom: 20px;
+        }
+        
+        .file-input-container {
+            margin: 25px 0;
+            padding: 20px;
+            border: 2px dashed var(--border-dark);
+            border-radius: 8px;
+            background-color: var(--white);
+            transition: all 0.3s;
+        }
+        
+        .file-input-container.dragover {
+            border-color: var(--yellow);
+            background-color: var(--light-gray);
+        }
+        
+        .file-input {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--medium-gray);
+            border: 1px solid var(--border-dark);
+            border-radius: 4px;
+            color: var(--white);
+            margin-top: 10px;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            justify-content: center;
+            margin-top: 20px;
+            padding: 12px;
+            font-size: 16px;
+        }
+        
+        .instructions {
+            text-align: left;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--white);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .instructions h3 {
+            color: var(--yellow);
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 5px;
+            color: var(--text-light);
+        }
+        
+        @media (max-width: 576px) {
+            .upload-card {
+                padding: 20px;
+            }
+            
+            body {
+                padding: 15px;
+                align-items: flex-start;
+                padding-top: 40px;
+            }
+        }
+    </style>
+</head>
+<body class="transactions-theme">
+    <div class="upload-container">
+        <section class="card upload-card">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img src="./img/logo.jpg" alt="Logo AJS" class="logo-img" style="height: 70px; margin-bottom: 15px;">
+                <h2 style="color: var(--blue); margin: 0; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <i class="fas fa-upload"></i> Cargar Estudiantes
+                </h2>
+                <p style="color: var(--text-light); margin-top: 5px;">Sistema de Gestión de Estudiantes AJS</p>
+            </div>
+            
+            <form id="upload-form" enctype="multipart/form-data">
+                <div class="file-input-container" id="drop-zone">
+                    <i class="fas fa-file-csv" style="font-size: 36px; color: var(--blue-light); margin-bottom: 10px;"></i>
+                    <p style="color: var(--text-light); margin-bottom: 15px;">Seleccione o arrastre el archivo CSV</p>
+                    <input type="file" id="archivo-csv" name="archivo_csv" accept=".csv" class="file-input" required>
+                    <p style="color: var(--text-light); font-size: 12px; margin-top: 10px;">Formato aceptado: CSV con estructura del Listado Liceo</p>
+                </div>
+                
+                <button type="submit" class="submit-btn" id="submit-btn">
+                    <i class="fas fa-cloud-upload-alt"></i> Procesar Archivo
+                </button>
+            </form>
+            
+            <div class="instructions">
+                <h3><i class="fas fa-info-circle"></i> Instrucciones:</h3>
+                <ul>
+                    <li>El archivo debe ser un CSV con separador punto y coma (;)</li>
+                    <li>Debe mantener la estructura exacta del Listado Liceo</li>
+                    <li>Solo se cargarán estudiantes nuevos (cédulas no existentes)</li>
+                    <li>El sistema validará automáticamente la estructura del archivo</li>
+                </ul>
+            </div>
+        </section>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="./js/auth.js"></script>  
+    <script>
+        $(document).ready(function() {
+            // Verificar autenticación
+            if (!localStorage.getItem('usuarioAutenticado')) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Manejar drag and drop
+            const dropZone = $('#drop-zone');
+            const fileInput = $('#archivo-csv');
+            
+            dropZone.on('dragover', function(e) {
+                e.preventDefault();
+                dropZone.addClass('dragover');
+            });
+            
+            dropZone.on('dragleave', function(e) {
+                e.preventDefault();
+                dropZone.removeClass('dragover');
+            });
+            
+            dropZone.on('drop', function(e) {
+                e.preventDefault();
+                dropZone.removeClass('dragover');
+                const files = e.originalEvent.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput[0].files = files;
+                    updateFileName();
+                }
+            });
+            
+            fileInput.on('change', function() {
+                updateFileName();
+            });
+            
+            function updateFileName() {
+                const fileName = fileInput[0].files[0] ? fileInput[0].files[0].name : 'No se seleccionó archivo';
+                dropZone.find('p').first().text(fileName);
+            }
+            
+            $('#upload-form').on('submit', function(e) {
+                e.preventDefault();
+                
+                const file = fileInput[0].files[0];
+                console.log("Archivo: ",file);
+                if (!file) {
+                    showStatusMessage('Por favor, seleccione un archivo CSV', 'error');
+                    return;
+                }
+                console.log("Nombre del archivo: ",file.name, file.name.toLowerCase());
+                if (!file.name.toLowerCase().endsWith('.csv')) {
+                    showStatusMessage('El archivo debe ser un CSVxxx    ', 'error');
+                    return;
+                }
+                
+                const formData = new FormData();
+                formData.append('archivo_csv', file);
+                
+                console.log("FormData: ",formData.entries()); 
+                // Deshabilitar botón durante el proceso
+                const submitBtn = $('#submit-btn');
+                submitBtn.prop('disabled', true);
+                submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Procesando...');
+                
+                // Enviar archivo
+                $.ajax({
+                    url: './apis/api_estudiantes.php',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            // Mostrar resumen detallado
+                            let mensaje = `TOTAL REGISTROS: ${response.total_registros}\n\n`;
+                            mensaje += `Nuevos registros cargados: ${response.nuevos_registros}\n\n`;
+                            
+                            // Agregar resumen por grado-sección
+                            for (const [gradoSeccion, cantidad] of Object.entries(response.registros_por_grado)) {
+                                mensaje += `registros de ${gradoSeccion} = ${cantidad}\n`;
+                            }
+                            
+                            showStatusMessage(mensaje, 'success');
+                        } else {
+                            showStatusMessage(response.message, 'error');
+                        }
+                    },
+                    error: function() {
+                        showStatusMessage('Error al conectar con el servidor', 'error');
+                    },
+                    complete: function() {
+                        submitBtn.prop('disabled', false);
+                        submitBtn.html('<i class="fas fa-cloud-upload-alt"></i> Procesar Archivo');
+                    }
+                });
+            });
+            
+            // Función para mostrar mensajes (reutilizada del login)
+            function showStatusMessage(message, type = 'info') {
+                const existingPopup = document.getElementById('custom-status-popup');
+                if (existingPopup) existingPopup.remove();
+
+                const popup = document.createElement('div');
+                popup.id = 'custom-status-popup';
+
+                const popupContent = document.createElement('div');
+                popupContent.className = 'popup-content';
+
+                const messageElement = document.createElement('p');
+                messageElement.className = 'popup-message';
+                messageElement.style.whiteSpace = 'pre-line'; // Para respetar saltos de línea
+                messageElement.textContent = message;
+                
+                if (type === 'success') messageElement.classList.add('success');
+                else if (type === 'error') messageElement.classList.add('error');
+                else if (type === 'loading') messageElement.classList.add('loading');
+
+                const acceptButton = document.createElement('button');
+                acceptButton.className = 'popup-button';
+                acceptButton.textContent = 'Aceptar';
+                
+                acceptButton.addEventListener('click', () => {
+                    popup.classList.remove('show');
+                    setTimeout(() => popup.remove(), 300);
+                });
+
+                popupContent.appendChild(messageElement);
+                popupContent.appendChild(acceptButton);
+                popup.appendChild(popupContent);
+                document.body.appendChild(popup);
+                
+                setTimeout(() => popup.classList.add('show'), 10);
+            }
+        });
+    </script>
+</body>
+</html>

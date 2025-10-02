@@ -194,7 +194,8 @@ class ManejadorEstudiantes {
                         className: 'dt-center'
                     },
                     { 
-                        data: 'nombre_apellido',
+                        // data: 'nombre_apellido',
+                        data: 'nom_apell',
                         className: 'dt-left'
                     },
                     { 
@@ -330,8 +331,10 @@ class ManejadorEstudiantes {
         
         if (alumno && this.callbackSeleccion) {
             // Formatear el texto como se solicitó: nombre_apellido + "-" + id_grado_cursa
-            const textoAlumno = `${alumno.nombre_apellido} - ${alumno.id_grado_cursa}`;
-            this.callbackSeleccion(textoAlumno);
+            console.log("Alumno xxx seleccionado:", alumno);
+            const textoAlumno = `${alumno.nom_apell} - ${alumno.id_grado_cursa}`;
+            const cedulaAlumno = alumno.cedula;
+            this.callbackSeleccion(textoAlumno, cedulaAlumno);
         }
         
         this.cerrarModal();

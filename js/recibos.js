@@ -19,16 +19,21 @@ async function get_usuario_Estacion () {
 }
 
 setTimeout(() => {
-    const inputAlumno = document.getElementById('cedula');
+    const inputAlumno = document.getElementById('nombre-est');
+    const inputCedula = document.getElementById('cedula');
+    
     const btnBuscarAlumno = document.getElementById('btn-buscar-alumno');
     
     console.log("Input alumno:", inputAlumno); // Para debug
+    console.log("Input cedula:", inputCedula); // Para debug
     console.log("Btn buscar:", btnBuscarAlumno); // Para debug
     
     if (btnBuscarAlumno && typeof manejadorEstudiantes !== 'undefined') {
         btnBuscarAlumno.addEventListener('click', () => {
-            manejadorEstudiantes.mostrarModal((textoAlumno) => {
+            manejadorEstudiantes.mostrarModal((textoAlumno,cedulaAlumno) => {
                 inputAlumno.value = textoAlumno;
+                // inputCedula.value = textoAlumno.split(' - ')[0]; // Asumiendo que el formato es "nombre - cedula"       
+                inputCedula.value = cedulaAlumno; // Usar la cedula proporcionada por el callback
                 updateReciboPreview();
             });
         });
@@ -58,7 +63,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Configurar manejador de estudiantes si está disponible
     if (typeof manejadorEstudiantes !== 'undefined') {
         // Configurar callback para cuando se seleccione un alumno
-        const inputAlumno = document.getElementById('cedula');
+        const inputAlumno = document.getElementById('nombre-est');
+        const inputCedula = document.getElementById('cedula');
         const btnBuscarAlumno = document.getElementById('btn-buscar-alumno');
         
         console.log("manejadorEstudiantes disponible");
@@ -67,8 +73,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (btnBuscarAlumno) {
             btnBuscarAlumno.addEventListener('click', () => {
-                manejadorEstudiantes.mostrarModal((textoAlumno) => {
+                manejadorEstudiantes.mostrarModal((textoAlumno, cedulaAlumno) => {
                     inputAlumno.value = textoAlumno;
+                    inputCedula.value = cedulaAlumno; // Usar la cedula proporcionada por el callback
                     updateReciboPreview();
                 });
             });
@@ -191,7 +198,8 @@ function updateReciboPreview() {
     const numeroRecibo = document.getElementById('numero-recibo').value;
     const fecha = document.getElementById('fecha-recibo').value;
     const nombre = document.getElementById('nombre-cliente').value || '[Nombre del Cliente]';
-    const cedula = document.getElementById('cedula').value || '[Nombre Alumno]';
+    const nombre_est = document.getElementById('nombre-est').value || '[Nombre Alumno]';
+    const cedula = document.getElementById('cedula').value;
     const rubro = document.getElementById('rubro').value || '[Rubro]';
     const formaPago = document.getElementById('forma-pago').value || '[Forma de Pago]';
     const referencia = document.getElementById('referencia').value || '[Referencia]';
@@ -224,7 +232,7 @@ function updateReciboPreview() {
             </div>
             <div class="recibo-row">
                 <span class="recibo-label">Alumno:</span>
-                <span>${cedula}</span>
+                <span>${nombre_est}</span>
             </div>
             <div class="recibo-row">
                 <span class="recibo-label">Rubro:</span>
@@ -264,6 +272,7 @@ async function saveRecibo() {
     const numeroRecibo = document.getElementById('numero-recibo').value;
     const fecha = document.getElementById('fecha-recibo').value;
     const nombre = document.getElementById('nombre-cliente').value;
+    const nombre_est = document.getElementById('nombre-est').value;
     const cedula = document.getElementById('cedula').value;
     const rubro = document.getElementById('rubro').value;
     const formaPago = document.getElementById('forma-pago').value;
@@ -292,6 +301,7 @@ async function saveRecibo() {
         fecha: fecha,
         mes_control: mesControl,
         nombre_cliente: nombre,
+        nombre_est: nombre_est,
         cedula: cedula,
         rubro: rubro,
         forma_pago: formaPago,
@@ -334,7 +344,7 @@ async function saveRecibo() {
             (parseInt(numeroRecibo) + 1).toString().padStart(5, '0');
             
         // Limpiar formulario (excepto número de recibo)
-        ['nombre-cliente', 'cedula', 'referencia','descripcion', 'monto'].forEach(id => {
+        ['nombre-cliente', 'cedula','nombre-est', 'referencia','descripcion', 'monto'].forEach(id => {
             document.getElementById(id).value = '';
         });
         document.getElementById('char-count').textContent = '0';
@@ -590,7 +600,7 @@ async function imprimirRecibo(reciboId) {
 
         // Configuración de tabla compacta
         const cellHeight = 5;
-        const leftColWidth = 20;
+        const leftColWidth = 13;
         const rightColWidth = 65;
 
         // Función optimizada para impresión térmica
@@ -618,22 +628,41 @@ async function imprimirRecibo(reciboId) {
                 })() 
             },
             { label: "Cliente:", value: recibo.nombre_cliente.substring(0, 30) },
-            { label: "Alumno:", value: recibo.cedula },
-            { label: "Rubro: ", value: recibo.rubro.substring(0, 30) },
-            { label: "Descripción:", value: recibo.descripcion },
-            { label: "Forma Pago:", value: recibo.forma_pago },
-            { label: "Monto: ", value: montoFormatted },
-            //{ label: "Monto2: ", value: parseInt(recibo.monto)*recibo.tasa }, 
-            
-            { label: "Ref: ", value: recibo.referencia || 'N/A' }, 
-            { label: "Admin.:", value: recibo.usuario }
+            { label: "Alumno :", value: recibo.nombre_est },
+            { label: "Descrip:", value: recibo.descripcion },
+            { label: "F. Pago:", value: recibo.forma_pago },
+            { label: "Rubro  :", value: recibo.rubro.substring(0, 30) },
+            { label: "Monto  :", value: montoFormatted },
+            { label: "Ref    :", value: recibo.referencia || 'N/A' }, 
+            { label: "Admin. :", value: recibo.usuario }
         ];
-
         // Dibujar tabla compacta
-        essentialData.forEach(row => {
-            drawThermalCell(baseX, currentY, leftColWidth, cellHeight, row.label);
-            drawThermalCell(baseX + leftColWidth, currentY, rightColWidth, cellHeight, row.value);
-            currentY += cellHeight;
+        essentialData.forEach((row, index) => {
+            console.log("row: ", row, "row.label: ", row.label, "index: ", index);
+            // drawThermalCell(baseX, currentY, leftColWidth, cellHeight, row.label);
+            if (index === 2 || index === 3) {
+                
+                // Para las filas 2 y 3, combinar en una sola celda que ocupe todo el ancho
+                    console.log("row 2-3: ", row);
+                    // Solo procesar la fila 2, la 3 se omite
+                    const combinedWidth = leftColWidth + rightColWidth;
+                    const combinedValue = `${essentialData[2].value} ${essentialData[3].value}`;
+                    doc.setFont("helvetica", "bold");
+                    drawThermalCell(baseX, currentY, combinedWidth, cellHeight, row.label);
+                    currentY += cellHeight;
+                    doc.setFont("helvetica", "normal");
+                    drawThermalCell(baseX, currentY, combinedWidth, cellHeight, row.value);
+                    currentY += cellHeight;
+                
+                // La fila 3 (index === 3) se salta completamente
+            } else {
+                // Para las demás filas, comportamiento normal
+                doc.setFont("helvetica", "bold");
+                drawThermalCell(baseX, currentY, leftColWidth, cellHeight, row.label);
+                doc.setFont("helvetica", "normal");
+                drawThermalCell(baseX + leftColWidth, currentY, rightColWidth, cellHeight, row.value);
+                currentY += cellHeight;
+            }
         });
 
         currentY += 3;
@@ -761,6 +790,7 @@ function printRecibo() {
     const fecha = document.getElementById('fecha-recibo').value;
     const nombre = document.getElementById('nombre-cliente').value;
     const cedula = document.getElementById('cedula').value;
+    const nombre_est = document.getElementById('nombre-est').value;
     const rubro = document.getElementById('rubro').value;
     const formaPago = document.getElementById('forma-pago').value;
     const referencia = document.getElementById('referencia').value;
@@ -809,7 +839,7 @@ function printRecibo() {
     const tableData = [
         { label: "Fecha", value: fechaFormatted },
         { label: "Cliente", value: nombre },
-        { label: "Alumno/Cédula", value: cedula },
+        { label: "Alumno/Cédula", value: nombre_est},
         { label: "Rubro", value: rubro },
         { label: "Forma de Pago", value: formaPago },
         { label: "Referencia", value: referencia },

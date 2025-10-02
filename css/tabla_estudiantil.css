@@ -1,0 +1,101 @@
+/* Estilos específicos para la tabla de mensualidades */
+.tabla-mensual { 
+    width: 100%; 
+    border-collapse: collapse; 
+    font-size: 14px; 
+}
+
+.tabla-mensual th, .tabla-mensual td { 
+    border: 1px solid var(--border-dark); 
+    padding: 6px; 
+    text-align: center; 
+}
+
+.tabla-mensual th { 
+    background: var(--blue);
+    color: white;
+    position: sticky; 
+    top: 0; 
+    z-index: 1; 
+    font-weight: 500;
+}
+
+.paid { 
+    background: #e6ffea; 
+    color: #000; 
+} /* pagado */
+
+.partial { 
+    background: #fff8e0; 
+    color: #000; 
+} /* parcial */
+
+.not-paid { 
+    color: #aaa; 
+} /* no pagado */
+
+.sticky-left { 
+    position: sticky; 
+    left: 0; 
+    background: var(--medium-gray);
+    color: var(--text-light);
+    z-index: 2; 
+    font-weight: 500;
+}
+
+/* Ajustes para la tabla dentro de DataTables */
+#tabla-mensualidad_wrapper {
+    margin-top: 1rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+    background-color: var(--medium-gray);
+}
+
+#tabla-mensualidad {
+    background-color: var(--medium-gray);
+    color: var(--text-light);
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+#tabla-mensualidad tbody tr {
+    background-color: var(--medium-gray);
+}
+
+#tabla-mensualidad tbody tr:nth-child(even) {
+    background-color: var(--dark-gray);
+}
+
+#tabla-mensualidad tbody tr:hover {
+    background-color: var(--light-gray);
+}
+
+/* Filtros superiores */
+.filtros-superiores {
+    margin-bottom: 20px;
+}
+
+.filtros-superiores .filter-container {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+/* Ajustes para pantallas pequeñas */
+@media (max-width: 768px) {
+    .filtros-superiores .filter-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filtros-superiores .form-group {
+        width: 100%;
+    }
+    
+    .tabla-mensual {
+        font-size: 12px;
+    }
+}
