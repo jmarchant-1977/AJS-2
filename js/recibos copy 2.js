@@ -5,7 +5,7 @@ const COLORS = {
     blueLight: '#065df7',
     white: '#fefefb'
 };
-const RUBROS_CON_CONTROL = ['Mensualidad', 'Ratificacion', 'Nuevo Ingreso'];
+
 
 const usuarioAutenticado = localStorage.getItem('usuarioAutenticado');
 const usuarioEstacion = JSON.parse(usuarioAutenticado);
@@ -295,150 +295,61 @@ async function updateReciboPreview() {
     const htmlTabla = generarTablaControl(nombre_est, periodoVal, datosPagos);
     preview_control.innerHTML = htmlTabla;
 
-    setupDistributionValidation(); 
     // Reactivar validaciones de inputs
-    agregarValidacionInputsControl(); 
-    
+    agregarValidacionInputsControl();
 }
 
 // Modificamos generarTablaControl para aceptar el objeto 'pagos'
 function generarTablaControl(alumno, periodo, pagos = {}) {
+    // Meses ordenados según año escolar
     const meses = ['SEP', 'OCT', 'NOV', 'DIC', 'ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO'];
     
-    // Preparar valores DB (Fila 1)
-    const dbInscrip = parseFloat(pagos['INS'] || pagos['INSCRIPCION'] || 0).toFixed(2);
-    
-    // Encabezados
+    // Mapeo especial: La BD dice "INS", la tabla dice "Inscrip" (Columna especial)
+    // Buscamos en 'pagos' si existe la clave 'INS' o 'INSCRIPCION'
+    const montoInscripcion = pagos['INS'] || pagos['INSCRIPCION'] || ''; 
+    const valInscrip = montoInscripcion ? parseFloat(montoInscripcion).toFixed(2) : '';
+
     let headersHTML = `
         <th style="min-width: 150px;">Alumno</th>
-        <th style="min-width: 80px;">Concepto</th>
+        <th style="min-width: 80px;">Periodo</th>
         <th style="min-width: 60px;">Inscrip</th>
     `;
     
-    // Fila 1: Histórico (Base de Datos)
-    let rowDbHTML = `
-        <td class="td-fijo" rowspan="2" title="${alumno}" style="vertical-align: middle;">
-            ${alumno.substring(0, 15)}${alumno.length > 15 ? '...' : ''}<br>
-            <small>${periodo}</small>
-        </td>
-        <td class="row-header-db">Histórico</td>
-        <td><input type="text" class="ctrl-input ctrl-input-db" value="${dbInscrip > 0 ? dbInscrip : '-'}" disabled></td>
+    let inputsHTML = `
+        <td class="td-fijo" title="${alumno}">${alumno.substring(0, 20)}${alumno.length > 20 ? '...' : ''}</td>
+        <td class="td-fijo">${periodo}</td>
+        <td><input type="number" min="0" step="0.01" class="ctrl-input" placeholder="0.00" value="${valInscrip}"></td>
     `;
 
-    // Fila 2: Nuevo Pago (Inputs Editables)
-    let rowNewHTML = `
-        <td class="row-header-new">Abonar Hoy</td>
-        <td>
-            <input type="number" min="0" step="0.01" class="ctrl-input ctrl-input-new" 
-                   data-reason="INS" placeholder="0.00">
-        </td>
-    `;
-
-    // Generar columnas de meses
+    // Generar columnas de meses dinámicamente
     meses.forEach(mes => {
         headersHTML += `<th>${mes}</th>`;
         
-        // Valor BD
-        const valDb = parseFloat(pagos[mes] || 0).toFixed(2);
-        rowDbHTML += `<td><input type="text" class="ctrl-input ctrl-input-db" value="${valDb > 0 ? valDb : '-'}" disabled></td>`;
+        // Buscamos si existe pago para este mes en el objeto que trajo la API
+        const montoMes = pagos[mes] || '';
+        const valorInput = montoMes ? parseFloat(montoMes).toFixed(2) : '';
         
-        // Input Nuevo
-        rowNewHTML += `<td>
-            <input type="number" min="0" step="0.01" class="ctrl-input ctrl-input-new" 
-                   data-reason="${mes}" placeholder="0.00">
-        </td>`;
+        inputsHTML += `<td><input type="number" min="0" step="0.01" class="ctrl-input" placeholder="0.00" value="${valorInput}"></td>`;
     });
 
     return `
         <div class="control-table-wrapper">
-            <h3 style="margin-top: 15px; margin-bottom: 5px; font-size: 14px; color: #001e5d;">
-                Control de Pagos (Distribuir Monto)
-            </h3>
+            <h3 style="margin-top: 15px; margin-bottom: 5px; font-size: 14px; color: #001e5d;">Control de Pagos (Periodo: ${periodo})</h3>
             <table class="control-table">
-                <thead><tr>${headersHTML}</tr></thead>
+                <thead>
+                    <tr>
+                        ${headersHTML}
+                    </tr>
+                </thead>
                 <tbody>
-                    <tr style="background-color: #f9f9f9;">${rowDbHTML}</tr>
-                    <tr>${rowNewHTML}</tr>
+                    <tr>
+                        ${inputsHTML}
+                    </tr>
                 </tbody>
             </table>
-            <div id="validation-msg" style="font-size: 11px; text-align: right; padding: 2px;"></div>
         </div>
     `;
 }
-
-// --- NUEVA FUNCION DE VALIDACIÓN ---
-function setupDistributionValidation() {
-    const inputsNuevos = document.querySelectorAll('.ctrl-input-new');
-    const inputMontoTotal = document.getElementById('monto');
-    const inputRubro = document.getElementById('rubro'); // Capturamos el rubro
-    const msgDiv = document.getElementById('validation-msg');
-
-    function validarSuma() {
-        
-        // 1. VALIDACIÓN DEL RUBRO
-        // Si el rubro NO está en la lista de control, reseteamos y salimos
-        if (!RUBROS_CON_CONTROL.includes(inputRubro.value)) {
-            inputsNuevos.forEach(input => {
-                input.value = '';             // Limpiamos valor
-                input.disabled = true;        // Deshabilitamos input
-                input.style.backgroundColor = '#f0f0f0'; // Color gris visual
-                input.classList.remove('distribucion-valida', 'distribucion-invalida');
-            });
-            msgDiv.innerHTML = '<span style="color:#666; font-style:italic">Distribución no requerida para este rubro.</span>';
-            return true; // Retornamos true para no bloquear nada
-        }
-        
-        let sumaDistribucion = 0;
-        inputsNuevos.forEach(input => {
-            sumaDistribucion += parseCurrency(input.value || '0');
-        });
-
-        // Usamos parseCurrency en el monto total para asegurar formato numero
-        const montoTotal = parseCurrency(inputMontoTotal.value);
-        
-        // Margen de error para flotantes
-        const diferencia = Math.abs(sumaDistribucion - montoTotal);
-        const esValido = diferencia < 0.01;
-
-        inputsNuevos.forEach(input => {
-            // Solo pintamos si el input tiene valor o si hay error global
-            if (input.value !== '' || !esValido) {
-                if (esValido) {
-                    input.classList.add('distribucion-valida');
-                    input.classList.remove('distribucion-invalida');
-                } else {
-                    input.classList.add('distribucion-invalida');
-                    input.classList.remove('distribucion-valida');
-                }
-            } else {
-                 input.classList.remove('distribucion-valida', 'distribucion-invalida');
-            }
-        });
-
-        if (esValido) {
-            msgDiv.innerHTML = '<span style="color:green"><i class="fas fa-check"></i> Distribución Correcta</span>';
-        } else {
-            msgDiv.innerHTML = `<span style="color:red"><i class="fas fa-times"></i> Diferencia: ${(montoTotal - sumaDistribucion).toFixed(2)}</span>`;
-        }
-        
-        return esValido;
-    }
-
-    // Listeners
-    inputsNuevos.forEach(input => input.addEventListener('input', validarSuma));
-    // También escuchamos cambios en el monto total original para re-validar
-    inputMontoTotal.addEventListener('input', validarSuma);
-    
-    // IMPORTANTE: Escuchar cambios en el Rubro para activar/desactivar inputs
-    inputRubro.addEventListener('change', validarSuma);
-
-    // Validación inicial (si ya hay monto)
-    if(inputMontoTotal.value) validarSuma();
-
-    // Validación inicial
-    validarSuma();
-}
-
 
 /**
  * Función para asegurar que no se metan negativos
@@ -464,7 +375,6 @@ async function saveRecibo() {
     const referencia = document.getElementById('referencia').value;
     const descripcion = document.getElementById('descripcion').value;
     const monto = parseCurrency(document.getElementById('monto').value);
-    const periodo = document.getElementById('periodo').value; // Asegúrate de capturar el periodo
     const usuario = usuarioEstacion.nombre || 'desconocido';
     const tasa = tasaActual;
     
@@ -482,52 +392,9 @@ async function saveRecibo() {
         showStatusMessage('La tasa debe ser un monto Valido...!','info');
         return;
     }
-
-    
-    // --- NUEVA LÓGICA DE VALIDACIÓN CONDICIONAL ---
-    let detallesPago = []; // Por defecto vacío
-    
-    // Solo si el rubro requiere control, validamos y llenamos el array
-    if (RUBROS_CON_CONTROL.includes(rubro)) {
-        let sumaDistribucion = 0;
-        
-        document.querySelectorAll('.ctrl-input-new').forEach(input => {
-            const val = parseCurrency(input.value || '0');
-            if (val > 0) {
-                sumaDistribucion += val;
-                detallesPago.push({
-                    razon: input.dataset.reason,
-                    monto: val
-                });
-            }
-        });
-
-        // Bloqueante: Si la suma no cuadra, NO guardamos
-        if (Math.abs(sumaDistribucion - monto) > 0.01) {
-            showStatusMessage('Error: La distribución del pago no coincide con el monto total.', 'error');
-            return; 
-        }
-        
-        // Bloqueante: Si es rubro controlado, debe tener al menos un detalle distribuido
-        if (detallesPago.length === 0 && monto > 0) {
-            showStatusMessage('Error: Debe distribuir el monto en los meses correspondientes.', 'error');
-            return;
-        }
-    }
-
-
-
-
-   /* if (Math.abs(sumaDistribucion - monto) > 0.01) {
-        showStatusMessage('La distribución de pagos no coincide con el Monto Total.', 'error');
-        return; // Detiene el guardado
-    } */
-    
-    // Obtener mes de control
+    // Obtener mes de control (YYYY-MM)
     const fechaObj = new Date(fecha);
     const mesControl = `${fechaObj.getFullYear()}-${(fechaObj.getMonth() + 1).toString().padStart(2, '0')}`;
-
-
     
     const reciboData = {
         numero_recibo: numeroRecibo,
@@ -542,10 +409,7 @@ async function saveRecibo() {
         descripcion: descripcion,
         monto: monto,
         usuario: usuario,
-        tasa: tasa,
-        // NUEVOS DATOS PARA EL BACKEND
-        periodo_escolar: periodo, 
-        detalles_pago: detallesPago // Array con detalles de distribución
+        tasa: tasa
     };
     
     console.log("Data Recibo: ",reciboData);
@@ -585,13 +449,6 @@ async function saveRecibo() {
         });
         document.getElementById('char-count').textContent = '0';
         
-        // Importante: Limpiar inputs de distribución también
-        document.querySelectorAll('.ctrl-input-new').forEach(i => i.value = '');
-        
-        // Actualizar formulario y tabla
-        ['nombre-cliente', 'referencia','descripcion', 'monto'].forEach(id => document.getElementById(id).value = '');
-        document.getElementById('numero-recibo').value = (parseInt(numeroRecibo) + 1).toString().padStart(5, '0');
-
         // Actualizar vista previa
         updateReciboPreview();
     } catch (error) {

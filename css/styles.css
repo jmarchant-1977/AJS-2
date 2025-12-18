@@ -938,3 +938,111 @@ footer {
 .btn-seleccionar-alumno:hover {
     background-color: #218838;
 }
+
+/* Estilos para la tabla de control en recibos */
+.control-table-wrapper {
+    margin-top: 10px;
+    overflow-x: auto; /* Permite scroll horizontal si la pantalla es pequeña */
+    border-top: 2px solid #ccc;
+    padding-top: 10px;
+}
+
+.control-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    font-family: 'Roboto', sans-serif;
+    background-color: #fff;
+}
+
+.control-table th {
+    background-color: #001e5d; /* Color azul de tu marca */
+    color: white;
+    padding: 5px 2px;
+    text-align: center;
+    border: 1px solid #ddd;
+    font-weight: 500;
+}
+
+.control-table td {
+    padding: 0;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+
+.control-table .td-fijo {
+    padding: 4px;
+    white-space: nowrap;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background-color: #f9f9f9;
+    color: #333;
+}
+
+/* Inputs dentro de la tabla */
+.ctrl-input {
+    width: 100%;
+    border: none;
+    padding: 6px 2px;
+    text-align: center;
+    font-size: 12px;
+    outline: none;
+    background-color: transparent;
+    color: #333;
+}
+
+.ctrl-input:focus {
+    background-color: #e8f0fe;
+    font-weight: bold;
+}
+
+/* Ocultar flechas de input number en Chrome/Safari */
+.ctrl-input::-webkit-outer-spin-button,
+.ctrl-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Ocultar flechas de input number en Firefox */
+/* .ctrl-input[type=number] {
+  -moz-appearance: textfield;
+} */
+
+
+/* --------------------------- cambios en la tabla control de pagos ----------------------------*/
+
+/* Inputs de Base de Datos (Fila 1 - Solo lectura) */
+.ctrl-input-db {
+    background-color: #f0f0f0;
+    color: #666;
+    border: none;
+    font-weight: bold;
+    cursor: not-allowed;
+}
+
+/* Inputs de Distribución Actual (Fila 2 - Editables) */
+.ctrl-input-new {
+    border-bottom: 2px solid #ccc;
+    background-color: #fff;
+    transition: all 0.3s ease;
+}
+
+.ctrl-input-new:focus {
+    background-color: #e8f0fe;
+}
+
+/* Estados de validación */
+.distribucion-valida {
+    border-bottom: 2px solid #28a745 !important; /* Verde */
+    color: #28a745;
+}
+
+.distribucion-invalida {
+    border-bottom: 2px solid #dc3545 !important; /* Rojo */
+    color: #dc3545;
+}
+
+/* Fila de totales */
+.row-header-db { background-color: #e9ecef; font-size: 11px; }
+.row-header-new { background-color: #fff; font-weight: bold; font-size: 11px; }

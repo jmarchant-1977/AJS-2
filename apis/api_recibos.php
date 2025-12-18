@@ -31,6 +31,7 @@ try {
             // Decodificar JSON
             $config['rubros'] = json_decode($config['rubros']);
             $config['formas_pago'] = json_decode($config['formas_pago']);
+            $config['periodo'] = json_decode($config['periodo']);
             
             echo json_encode([
                 'success' => true,
@@ -54,39 +55,71 @@ try {
             }
             
             // Insertar recibo
-            $stmt = $conn->prepare("INSERT INTO recibos (
-                numero_recibo, fecha, mes_control, nombre_cliente, nombre_est, cedula, 
-                rubro, forma_pago, referencia, descripcion, monto, usuario, tasa
-            ) VALUES (
-                :numero_recibo, :fecha, :mes_control, :nombre_cliente, :nombre_est, :cedula, 
-                :rubro, :forma_pago, :referencia, :descripcion, :monto, :usuario, :tasa
-            )");
+            $conn->beginTransaction();
             
-            $stmt->execute([
-                ':numero_recibo' => $data->numero_recibo,
-                ':fecha' => $data->fecha,
-                ':mes_control' => $data->mes_control,
-                ':nombre_cliente' => $data->nombre_cliente,
-                ':nombre_est' => $data->nombre_est,
-                ':cedula' => $data->cedula,
-                ':rubro' => $data->rubro,
-                ':forma_pago' => $data->forma_pago,
-                ':referencia' => $data->referencia,
-                ':descripcion' => $data->descripcion,
-                ':monto' => $data->monto,
-                ':usuario' => $data->usuario,
-                ':tasa' => $data->tasa
-            ]);
-            
-            // Actualizar último número de recibo en configuración
-            //$numero = (int) str_replace('0', '', $data->numero_recibo);
-            $numero = (int) $data->numero_recibo;
-            $conn->exec("UPDATE configuracion SET ultimo_numero = $numero");
-            
-            echo json_encode([
-                'success' => true,
-                'message' => 'Recibo guardado exitosamente'
-            ]);
+            try {
+            // 1. Insertar Recibo (Tu query original)
+                $stmt = $conn->prepare("INSERT INTO recibos (
+                    numero_recibo, fecha, mes_control, nombre_cliente, nombre_est, cedula, 
+                    rubro, forma_pago, referencia, descripcion, monto, usuario, tasa
+                ) VALUES (
+                    :numero_recibo, :fecha, :mes_control, :nombre_cliente, :nombre_est, :cedula, 
+                    :rubro, :forma_pago, :referencia, :descripcion, :monto, :usuario, :tasa
+                )");
+                
+                $stmt->execute([
+                    ':numero_recibo' => $data->numero_recibo,
+                    ':fecha' => $data->fecha,
+                    ':mes_control' => $data->mes_control,
+                    ':nombre_cliente' => $data->nombre_cliente,
+                    ':nombre_est' => $data->nombre_est,
+                    ':cedula' => $data->cedula,
+                    ':rubro' => $data->rubro,
+                    ':forma_pago' => $data->forma_pago,
+                    ':referencia' => $data->referencia,
+                    ':descripcion' => $data->descripcion,
+                    ':monto' => $data->monto,
+                    ':usuario' => $data->usuario,
+                    ':tasa' => $data->tasa
+                ]);
+                
+                // 2. Insertar Detalles en registro_pago (NUEVO)
+                if (!empty($data->detalles_pago) && is_array($data->detalles_pago)) {
+                    $stmtDetalle = $conn->prepare("INSERT INTO registro_pago (
+                        cedula_est, recibo, fecha, periodo, razon, monto
+                    ) VALUES (
+                        :cedula, :recibo, :fecha, :periodo, :razon, :monto
+                    )");
+
+                    foreach ($data->detalles_pago as $detalle) {
+                        $stmtDetalle->execute([
+                            ':cedula'  => $data->cedula,
+                            ':recibo'  => $data->numero_recibo,
+                            ':fecha'   => $data->fecha,       // Misma fecha del recibo
+                            ':periodo' => $data->periodo_escolar, // Viene del JS
+                            ':razon'   => $detalle->razon,    // 'SEP', 'OCT', etc.
+                            ':monto'   => $detalle->monto
+                        ]);
+                    }
+                }
+
+                // Actualizar último número de recibo en configuración
+                // $numero = (int) str_replace('0', '', $data->numero_recibo);
+                // 3. Actualizar Configuración
+                $numero = (int) $data->numero_recibo;
+                $conn->exec("UPDATE configuracion SET ultimo_numero = $numero");
+                
+                // CONFIRMAR TRANSACCIÓN
+                $conn->commit();
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Recibo guardado exitosamente'
+                ]);
+            } catch (Exception $e) {
+                // Si algo falla, deshacer todo
+                $conn->rollBack();
+                throw $e; // Re-lanzar para que lo capture el catch global
+            }
             break;
             
         case 'get_recibos':
@@ -164,6 +197,24 @@ try {
             ]);
             break;
         
+       
+            // Obtener un recibo específico por número de recibo
+            $cedula_est = $_GET['cedula_est'] ?? 0;
+            
+            $stmt = $conn->prepare("SELECT * FROM registro_pago WHERE cedula_est = :cedula_est");
+            $stmt->execute([':cedula_est' => $cedula_est]);
+            $registro = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$registro) {
+                throw new Exception("Registro no encontrado");
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'data' => $registro
+            ]);
+            break;
+        
         case 'get_estudiantes':
             // Obtener todos los estudiantes
 
@@ -235,7 +286,37 @@ try {
                 ]);
             }
             break;
+        case 'get_pagos_control':
+            // Obtener pagos agrupados por razón (mes/concepto)
+            $cedula = $_GET['cedula'] ?? '';
+            $periodo = $_GET['periodo'] ?? '';
 
+            if (empty($cedula) || empty($periodo)) {
+                echo json_encode(['success' => true, 'data' => []]);
+                break;
+            }
+
+            // Consulta para sumar los montos agrupados por razón
+            $sql = "SELECT razon, SUM(monto) as total 
+                    FROM registro_pago 
+                    WHERE cedula_est = :cedula 
+                    AND periodo = :periodo 
+                    GROUP BY razon";
+            
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([
+                ':cedula' => $cedula,
+                ':periodo' => $periodo
+            ]);
+            
+            // Convertimos el resultado en un array asociativo simple: ['SEP' => 50.00, 'INS' => 40.00]
+            $pagos = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+            
+            echo json_encode([
+                'success' => true,
+                'data' => $pagos
+            ]);
+            break;
         default:
             throw new Exception("Acción no válida");
     }

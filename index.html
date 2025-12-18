@@ -68,15 +68,15 @@
                 <div class="form-group">
                     <label for="nombre-est">Alumno</label>
                     <div style="display: flex; align-items: center;">
-                        <input type="text" id="nombre-est" class="form-input"  style="flex: 1;">
+                        <input type="text" id="nombre-est" class="form-input" readonly style="flex: 1;">
                         <button id="btn-buscar-alumno" class="btn-buscar-alumno" title="Buscar alumno">
                             <i class="fas fa-search"></i>
                         </button>
                     </div>
                 </div>
                 <!-- cedula hidden -->
-                <!-- <div class="form-group" style="display: none;"> -->
                 <div class="form-group" style="display: none;">
+                <!-- <div class="form-group" > -->
                     <label for="cedula">Cedula</label>
                     <div style="display: flex; align-items: center;">
                         <input type="text" id="cedula" class="form-input" required style="flex: 1;">
@@ -90,12 +90,22 @@
                         <!-- Se llenará dinámicamente desde la BD -->
                     </select>
                 </div>
+
+                <div class="form-group">
+                    <label for="periodo">Periodo</label>
+                    <select id="periodo" class="form-input" required style="padding: 5px 5px;">
+                        <!-- Se llenará dinámicamente desde la BD -->
+                    </select>
+                </div>
+                
                 <div class="form-group">
                     <label for="forma-pago">Forma de Pago</label>
                     <select id="forma-pago" class="form-input" required style="padding: 5px 5px;">
                         <!-- Se llenará dinámicamente desde la BD -->
                     </select>
                 </div>
+
+
 
                 <div class="form-group">
                     <label for="referencia">Referencia</label>
@@ -124,6 +134,12 @@
                 <div id="recibo-preview" class="recibo-preview-container">
                     <!-- Vista previa del recibo se generará aquí -->
                 </div>
+
+                <div id="control-preview" class="control-preview-container">
+                    <!-- Vista previa del control  se generará aquí -->
+                </div>
+
+
             </section>
         </main>
 
