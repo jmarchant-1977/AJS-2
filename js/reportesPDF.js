@@ -34,7 +34,8 @@ export async function generarReporte(tipo_reporte, fecha_reporte, usuario) {
             },
             body: JSON.stringify({
                 fechaInicio: fecha_reporte,
-                fechaFin: fecha_reporte
+                fechaFin: fecha_reporte,
+                usuario: usuario
             })
         });
         

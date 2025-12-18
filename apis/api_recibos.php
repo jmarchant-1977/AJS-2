@@ -139,6 +139,11 @@ try {
                 $params[':fechaFin'] = $data->fechaFin;
             }
             
+            if (!empty($data->usuario)) {
+                $where[] = 'usuario = :usuario';
+                $params[':usuario'] = $data->usuario;
+            } 
+            
             if (!empty($data->mesControl)) {
                 $where[] = 'mes_control = :mesControl';
                 $params[':mesControl'] = $data->mesControl;
