@@ -1,7 +1,7 @@
 <?php
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json; charset=UTF-8');
-                                                                                                                                                                                                                                                                                                                                                                      define('FECHA_LIMITE', '2025-12-31'); // Cambia por tu fecha requerida
+                                                                                                                                                                                                                                                                                                                                                                      define('FECHA_LIMITE', '2026-12-31'); // Cambia por tu fecha requerida
 if (date('Y-m-d') > FECHA_LIMITE) {
     http_response_code(403); // Prohibido
     echo json_encode([
@@ -14,7 +14,7 @@ if (date('Y-m-d') > FECHA_LIMITE) {
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "sistema_recibos_ajs";
+$dbname = "sistema_recibos_ajs_qa";
 
 try {
     $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
@@ -23,6 +23,44 @@ try {
     $action = $_GET['action'] ?? '';
     
     switch ($action) {
+        case 'save_estudiante':
+            $data = json_decode(file_get_contents('php://input'));
+            
+            if (empty($data->cedula) || empty($data->nombre_apellido)) {
+                throw new Exception("Cédula y Nombre son obligatorios");
+            }
+
+            $sql = "INSERT INTO estudiantes (
+                        cedula, nombre_apellido, nombres, apellidos, 
+                        fecha_nac, sexo, id_grado_cursa, desc_grado_cursa, usuario
+                    ) VALUES (
+                        :cedula, :nombre_ap, :nombres, :apellidos, 
+                        :fecha_nac, :sexo, :id_grado, :desc_grado, :usuario
+                    ) ON DUPLICATE KEY UPDATE 
+                        nombre_apellido = VALUES(nombre_apellido),
+                        nombres = VALUES(nombres),
+                        apellidos = VALUES(apellidos),
+                        fecha_nac = VALUES(fecha_nac),
+                        sexo = VALUES(sexo),
+                        id_grado_cursa = VALUES(id_grado_cursa),
+                        desc_grado_cursa = VALUES(desc_grado_cursa),
+                        usuario = VALUES(usuario)";
+            
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([
+                ':cedula'    => $data->cedula,
+                ':nombre_ap' => $data->nombre_apellido,
+                ':nombres'   => $data->nombres,
+                ':apellidos' => $data->apellidos,
+                ':fecha_nac' => $data->fecha_nac,
+                ':sexo'      => $data->sexo,
+                ':id_grado'  => $data->id_grado_cursa,
+                ':desc_grado'=> $data->desc_grado_cursa,
+                ':usuario'   => $data->usuario
+            ]);
+
+            echo json_encode(['success' => true, 'message' => 'Estudiante procesado correctamente']);
+            break;
         case 'get_config':
             // Obtener configuración (rubros, formas de pago y último número de recibo)
             $stmt = $conn->query("SELECT * FROM configuracion LIMIT 1");
@@ -268,7 +306,8 @@ try {
                 ['id' => 3, 'nombre' => 'caja01', 'password' => 'caja01ajs', 'rol' => 'cajero'],
                 ['id' => 4, 'nombre' => 'caja02', 'password' => 'caja02ajs', 'rol' => 'cajero'],
                 ['id' => 5, 'nombre' => 'caja03', 'password' => 'caja03ajs', 'rol' => 'cajero'],
-                ['id' => 6, 'nombre' => 'superadmin', 'password' => '321321321', 'rol' => 'administrador']
+                ['id' => 6, 'nombre' => 'superadmin', 'password' => '321321321', 'rol' => 'sadministrador'],
+                ['id' => 7, 'nombre' => 'admin-joan', 'password' => 'admin03joan', 'rol' => 'reportes']
             ];
             
             $usuarioAutenticado = null;
@@ -322,9 +361,128 @@ try {
                 'data' => $pagos
             ]);
             break;
+        case 'importar_csv_pagos':
+            $data = json_decode(file_get_contents('php://input'), true);
+            
+            if (!$data || !is_array($data)) {
+                throw new Exception("No se recibieron datos válidos");
+            }
+
+            $conn->beginTransaction();
+            try {
+                $sql = "INSERT INTO registro_pago (cedula_est, recibo, fecha, periodo, razon, monto) 
+                        VALUES (:cedula_est, :recibo, :fecha, :periodo, :razon, :monto)";
+                $stmt = $conn->prepare($sql);
+
+                foreach ($data as $row) {
+                    $stmt->execute([
+                        ':cedula_est' => $row['cedula_est'],
+                        ':recibo'     => $row['recibo'],
+                        ':fecha'      => $row['fecha'],
+                        ':periodo'    => $row['periodo'],
+                        ':razon'      => $row['razon'],
+                        ':monto'      => $row['monto']
+                    ]);
+                }
+
+                $conn->commit();
+                echo json_encode([
+                    'success' => true, 
+                    'message' => count($data) . ' registros importados correctamente'
+                ]);
+            } catch (Exception $e) {
+                $conn->rollBack();
+                throw $e;
+            }
+            break;
+            case 'get_estudiante':
+                $cedula = $_GET['cedula'] ?? '';
+                $stmt = $conn->prepare("SELECT * FROM estudiantes WHERE cedula = ?");
+                $stmt->execute([$cedula]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                echo json_encode(['success' => !!$result, 'data' => $result]);
+                break;
+            case 'get_reporte_pagos':
+                $data = json_decode(file_get_contents('php://input'));
+                $periodo = $data->periodo ?? '';
+                $grado = $data->grado ?? '';
+                $seccion = $data->seccion ?? '';
+
+                $where = [];
+                $params = [':periodo' => $periodo];
+
+                // Filtros opcionales
+                if (!empty($grado)) {
+                    $where[] = "SUBSTRING_INDEX(e.desc_grado_cursa, ' - ', 1) = :grado";
+                    $params[':grado'] = $grado;
+                }
+                if (!empty($seccion)) {
+                    $where[] = "SUBSTRING_INDEX(e.desc_grado_cursa, ' - ', -1) = :seccion";
+                    $params[':seccion'] = $seccion;
+                }
+
+                $whereSql = count($where) > 0 ? ' AND ' . implode(' AND ', $where) : '';
+
+                $sql = "SELECT 
+                            CONCAT(e.nombre_apellido, ' - ', e.id_grado_cursa) AS estudiante,
+                            e.cedula,
+                            :periodo AS periodo,
+                            SUBSTRING_INDEX(e.desc_grado_cursa, ' - ', 1) AS grado,
+                            SUBSTRING_INDEX(e.desc_grado_cursa, ' - ', -1) AS seccion,
+                            SUM(CASE WHEN rp.razon = 'INS' AND rp.periodo = :periodo THEN rp.monto ELSE 0 END) AS INS,
+                            SUM(CASE WHEN rp.razon = 'SEP' AND rp.periodo = :periodo THEN rp.monto ELSE 0 END) AS SEP,
+                            SUM(CASE WHEN rp.razon = 'OCT' AND rp.periodo = :periodo THEN rp.monto ELSE 0 END) AS OCT,
+                            SUM(CASE WHEN rp.razon = 'NOV' AND rp.periodo = :periodo THEN rp.monto ELSE 0 END) AS NOV,
+                            SUM(CASE WHEN rp.razon = 'DIC' AND rp.periodo = :periodo THEN rp.monto ELSE 0 END) AS DIC,
+                            SUM(CASE WHEN rp.razon = 'ENE' AND rp.periodo = :periodo THEN rp.monto ELSE 0 END) AS ENE,
+                            SUM(CASE WHEN rp.razon = 'FEB' AND rp.periodo = :periodo THEN rp.monto ELSE 0 END) AS FEB,
+                            SUM(CASE WHEN rp.razon = 'MAR' AND rp.periodo = :periodo THEN rp.monto ELSE 0 END) AS MAR,
+                            SUM(CASE WHEN rp.razon = 'ABR' AND rp.periodo = :periodo THEN rp.monto ELSE 0 END) AS ABR,
+                            SUM(CASE WHEN rp.razon = 'MAY' AND rp.periodo = :periodo THEN rp.monto ELSE 0 END) AS MAY,
+                            SUM(CASE WHEN rp.razon = 'JUN' AND rp.periodo = :periodo THEN rp.monto ELSE 0 END) AS JUN,
+                            SUM(CASE WHEN rp.razon = 'JUL' AND rp.periodo = :periodo THEN rp.monto ELSE 0 END) AS JUL,
+                            SUM(CASE WHEN rp.razon = 'AGO' AND rp.periodo = :periodo THEN rp.monto ELSE 0 END) AS AGO
+                        FROM estudiantes e
+                        LEFT JOIN registro_pago rp ON e.cedula = rp.cedula_est AND rp.periodo = :periodo
+                        WHERE 1=1 $whereSql
+                        GROUP BY e.cedula, e.nombre_apellido, e.id_grado_cursa, e.desc_grado_cursa
+                        ORDER BY e.id_grado_cursa ASC, e.nombre_apellido ASC";
+
+                $stmt = $conn->prepare($sql);
+                $stmt->execute($params);
+                $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                echo json_encode(['data' => $result]);
+            break;
+        // ... otros casos del switch ...
+
+    case 'get_detalles_pagos':
+        if (empty($_GET['cedula'])) {
+            throw new Exception("Cédula del estudiante es requerida");
+        }
+        
+        $cedula = $_GET['cedula'];
+        
+        $sql = "SELECT id, recibo, fecha, periodo, razon, monto 
+                FROM registro_pago 
+                WHERE cedula_est = :cedula 
+                ORDER BY recibo ASC";
+                
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([':cedula' => $cedula]);
+        $pagos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $pagos
+        ]);
+        break;
+
+
         default:
             throw new Exception("Acción no válida");
-    }
+    
+        }
     
 } catch(PDOException $e) {
     http_response_code(500);

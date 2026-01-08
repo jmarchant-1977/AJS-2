@@ -341,8 +341,136 @@ class ManejadorEstudiantes {
     }
 }
 
+// manejoEstudiantes.js - Nueva clase para ver detalles de pago
+class ModalDetallePagosEstudiante {
+    constructor() {
+        this.modal = null;
+        this.dataTable = null;
+        this.cedulaActual = null;
+    }
+
+    inicializar() {
+        if (!document.getElementById('modal-detalle-pagos-estudiante')) {
+            this.crearModal();
+        }
+
+        // Delegación de eventos para el botón que se genera dinámicamente en la tabla de control
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('#btn-det-pago-alumno')) {
+                const cedula = document.getElementById('cedula').value;
+                const nombre = document.getElementById('nombre-est').value;
+                if (cedula) {
+                    this.mostrarModal(cedula, nombre);
+                } else {
+                    showStatusMessage('Debe seleccionar un estudiante primero', 'info');
+                }
+            }
+        });
+    }
+
+    crearModal() {
+        this.modal = document.createElement('div');
+        this.modal.id = 'modal-detalle-pagos-estudiante';
+        this.modal.className = 'modal-estudiantes'; // Reusamos el estilo del otro modal
+        this.modal.innerHTML = `
+            <div class="modal-content-estudiantes" style="max-width: 800px;">
+                <div class="modal-header">
+                    <h2><i class="fas fa-history"></i> Historial de Pagos: <span id="det-nombre-estudiante"></span></h2>
+                    <span class="close-modal-det">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div class="table-container">
+                        <table id="tabla-detalle-pagos" class="display" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Recibo</th>
+                                    <th>Fecha</th>
+                                    <th>Periodo</th>
+                                    <th>Concepto</th>
+                                    <th>Monto ($)</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 15px; text-align: right;">
+                    <button class="submit-btn secondary close-modal-det-btn">Cerrar</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(this.modal);
+
+        // Eventos para cerrar
+        const cerrar = () => this.modal.style.display = 'none';
+        this.modal.querySelector('.close-modal-det').onclick = cerrar;
+        this.modal.querySelector('.close-modal-det-btn').onclick = cerrar;
+        window.onclick = (e) => { if (e.target === this.modal) cerrar(); };
+    }
+
+    async mostrarModal(cedula, nombre) {
+        this.cedulaActual = cedula;
+        document.getElementById('det-nombre-estudiante').textContent = nombre;
+        
+        try {
+            showStatusMessage('Cargando historial...', 'loading');
+            const response = await fetch(`./apis/api_recibos.php?action=get_detalles_pagos&cedula=${cedula}`);
+            const result = await response.json();
+
+            if (!result.success) throw new Error(result.error);
+
+            this.modal.style.display = 'block';
+            this.inicializarDataTable(result.data);
+            
+            // Eliminar mensaje de carga
+            const popup = document.getElementById('custom-status-popup');
+            if (popup) popup.remove();
+
+        } catch (error) {
+            console.error('Error:', error);
+            showStatusMessage('Error al cargar pagos: ' + error.message, 'error');
+        }
+    }
+
+    inicializarDataTable(datos) {
+        if ($.fn.DataTable.isDataTable('#tabla-detalle-pagos')) {
+            this.dataTable.destroy();
+            $('#tabla-detalle-pagos tbody').empty();
+        }
+
+        this.dataTable = $('#tabla-detalle-pagos').DataTable({
+            data: datos,
+            columns: [
+                { data: 'recibo', className: 'dt-center' },
+                { 
+                    data: 'fecha', 
+                    render: (data) => data.split('-').reverse().join('/'),
+                    className: 'dt-center'
+                },
+                { data: 'periodo', className: 'dt-center' },
+                { data: 'razon', className: 'dt-left' },
+                { 
+                    data: 'monto', 
+                    render: (data) => parseFloat(data).toFixed(2),
+                    className: 'dt-right'
+                }
+            ],
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+            },
+            pageLength: 10,
+            order: [[0, 'asc']], // Mostrar últimos recibos primero
+            dom: 'lfrtip'
+        });
+    }
+}
+
+
 // Inicializar el manejador cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
     window.manejadorEstudiantes = new ManejadorEstudiantes();
     window.manejadorEstudiantes.inicializar();
+
+    window.modalDetallePagos = new ModalDetallePagosEstudiante();
+    window.modalDetallePagos.inicializar();
 });

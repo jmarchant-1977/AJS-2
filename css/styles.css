@@ -861,6 +861,20 @@ footer {
 .btn-buscar-alumno:hover {
     background-color: #00308a;
 }
+.btn-buscar {
+    background-color: #001e5d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 3px 7px;
+    margin-left: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-buscar:hover {
+    background-color: #034ace;
+}
 
 /* Estilos para el modal de estudiantes */
 .modal-estudiantes {

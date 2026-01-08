@@ -28,14 +28,26 @@
                 </div>
                 <!-- Boton cerrar session Después del logo-colors -->
                 <div>
-                    <button onclick="logout()" class="submit-btn secondary">
-                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    <button onclick="logout()" class="submit-btn secondary" title="Cerrar Sesión">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+                <div>
+                    <button class="submit-btn secondary" title="Menú Principal" onclick="window.location.href='menu.html'">
+                        <i class="fas fa-home"></i>
                     </button>
                 </div>
                 <div>
                     <a class="submit-btn secondary" href="consultar_recibos.html">
                         <i class="fas fa-list"></i> Consultar Recibos
                     </a>
+                </div>
+                <!-- Botón de Importación -->
+                <div style="margin: 10px 0; display: none;" id="div-importar-csv">
+                    <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
+                    <button id="btn-importar-csv" class="submit-btn excel">
+                        <i class="fas fa-file-import"></i> Pagos CSV
+                    </button>
                 </div>
             <div>
                     <a class="submit-btn secondary" href="">
@@ -164,9 +176,109 @@
 
 <!-- Otros scripts... -->
 
-        <script src="./js/auth.js"></script>        
-        <script src="./js/recibos.js"></script>
-        <script src="./js/manejoEstudiantes.js"></script>
+    <script src="./js/auth.js"></script>        
+    <script src="./js/recibos.js"></script>
+    <script src="./js/manejoEstudiantes.js"></script>
+    
+    <!-- Script para importar CSV de pagos -->
+    <script>
+        $(document).ready(function() {
+            // Al hacer clic en el botón, disparamos el input oculto
+            $('#btn-importar-csv').on('click', function() {
+                $('#csv-file-input').click();
+            });
+
+            // Cuando el usuario selecciona un archivo
+            $('#csv-file-input').on('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const content = event.target.result;
+                    procesarCSV(content);
+                };
+                reader.readAsText(file);
+                // Limpiar el input para permitir subir el mismo archivo otra vez si se desea
+                $(this).val('');
+            });
+
+            function procesarCSV(csvText) {
+                const lineas = csvText.split(/\r?\n/);
+                const datosParaEnviar = [];
+                
+                // Empezamos en 1 para saltar la cabecera (cedula,recibo,fecha...)
+                for (let i = 1; i < lineas.length; i++) {
+                    if (lineas[i].trim() === "") continue;
+
+                    const columnas = lineas[i].split(',');
+                    
+                    // 1. Validar y Formatear Fecha (dd/mm/yyyy -> yyyy-mm-dd)
+                    let fechaOriginal = columnas[2] ? columnas[2].trim() : "";
+                    let fechaFormateada = "1900-01-01";
+                    
+                    if (fechaOriginal.includes('/')) {
+                        const partes = fechaOriginal.split('/');
+                        if (partes.length === 3) {
+                            // Asegurar formato yyyy-mm-dd
+                            fechaFormateada = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+                        }
+                    }
+
+                    // 2. Validar y Formatear Monto
+                    let montoOriginal = columnas[5] ? columnas[5].trim() : "";
+                    // Quitamos el símbolo $ y cualquier caracter no numérico excepto el punto
+                    let montoLimpio = montoOriginal.replace(/[^\d.-]/g, '');
+                    let montoFinal = parseFloat(montoLimpio);
+                    
+                    if (isNaN(montoFinal)) {
+                        montoFinal = 0.00;
+                    }
+
+                    // Estructura según tu tabla registro_pago
+                    datosParaEnviar.push({
+                        cedula_est: columnas[0] ? columnas[0].trim() : "",
+                        recibo: columnas[1] ? columnas[1].trim() : "",
+                        fecha: fechaFormateada,
+                        periodo: columnas[3] ? columnas[3].trim() : "",
+                        razon: columnas[4] ? columnas[4].trim() : "",
+                        monto: montoFinal.toFixed(2)
+                    });
+                }
+
+                if (datosParaEnviar.length > 0) {
+                    enviarAlServidor(datosParaEnviar);
+                }
+            }
+
+            function enviarAlServidor(datos) {
+                if (!confirm(`Se procesarán ${datos.length} registros. ¿Desea continuar?`)) return;
+
+                const $btn = $('#btn-importar-csv');
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Subiendo...');
+
+                console.log('Datos a enviar:', datos);
+                fetch('./apis/api_recibos.php?action=importar_csv_pagos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(datos)
+                })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.success) {
+                        alert('Éxito: ' + res.message);
+                    } else {
+                        alert('Error: ' + res.error);
+                    }
+                })
+                .catch(err => alert('Error de conexión'))
+                .finally(() => {
+                    $btn.prop('disabled', false).html('<i class="fas fa-file-import"></i> Importar Pagos CSV');
+                });
+            }
+        });
+    </script>
+
 
     
 </body>

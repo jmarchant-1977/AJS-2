@@ -9,8 +9,8 @@ const RUBROS_CON_CONTROL = ['Mensualidad', 'Ratificacion', 'Nuevo Ingreso'];
 
 const usuarioAutenticado = localStorage.getItem('usuarioAutenticado');
 const usuarioEstacion = JSON.parse(usuarioAutenticado);
-console.log("Usuario Estacion Recibos.js: ", usuarioEstacion.nombre);
-
+console.log("Usuario Estacion: ", usuarioEstacion.nombre);
+console.log("Usuario Estacion - Rol: ", usuarioEstacion.rol);
 
 let tasaActual = 0;
 
@@ -320,6 +320,10 @@ function generarTablaControl(alumno, periodo, pagos = {}) {
         <td class="td-fijo" rowspan="2" title="${alumno}" style="vertical-align: middle;">
             ${alumno.substring(0, 15)}${alumno.length > 15 ? '...' : ''}<br>
             <small>${periodo}</small>
+            <! ------------------ Boton para ver detalles de pago del estudiante ------------------ !>
+            <button id="btn-det-pago-alumno" class="btn-buscar" title="Detallar Pagos del alumno">
+                <i class="fas fa-search" style="color: dark-blue;"></i>
+            </button>
         </td>
         <td class="row-header-db">Histórico</td>
         <td><input type="text" class="ctrl-input ctrl-input-db" value="${dbInscrip > 0 ? dbInscrip : '-'}" disabled></td>

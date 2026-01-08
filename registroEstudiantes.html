@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AJS - Registro de Estudiantes</title>
+    <link rel="icon" href="./img/logo-ico.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body class="dark-theme">
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <div class="logo-image">
+                    <img src="./img/logo.jpg" alt="Logo AJS" class="logo-img">
+                </div>
+
+                <h1>AJS - Gestión de Estudiantes</h1>
+                <div class="logo-colors">
+                    <div class="color-box blue"></div>
+                    <div class="color-box yellow"></div>
+                    <div class="color-box white"></div>
+                </div>
+                <!-- Boton cerrar session Después del logo-colors -->
+                <div>
+                    <button onclick="logout()" class="submit-btn secondary" title="Cerrar Sesión">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+                <div>
+                    <button class="submit-btn secondary" title="Menú Principal" onclick="window.location.href='menu.html'">
+                        <i class="fas fa-home"></i>
+                    </button>
+                </div>
+
+
+            </div>
+        </header>
+
+        <main style="display: block; max-width: 600px; margin: 0 auto;">
+            <section class="card">
+                <h2><i class="fas fa-user-graduate"></i> Datos del Estudiante</h2>
+                
+                <!-- Dentro de <section class="card"> -->
+                <form id="form-estudiante">
+                    <div class="form-group">
+                        <label for="cedula-est">Cédula / ID</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="cedula-est" class="form-input" required placeholder="12345678" style="flex: 1;">
+                            <button type="button" id="btn-buscar-cedula" class="btn-buscar-alumno" title="Buscar en BD">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Cuadrícula de Nombres -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label for="p-nombre">Primer Nombre *</label>
+                            <input type="text" id="p-nombre" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="s-nombre">Segundo Nombre</label>
+                            <input type="text" id="s-nombre" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="p-apellido">Primer Apellido *</label>
+                            <input type="text" id="p-apellido" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="s-apellido">Segundo Apellido</label>
+                            <input type="text" id="s-apellido" class="form-input">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="nombre-est">Visualización en Recibo (Primer Nombre y Apellido)</label>
+                        <input type="text" id="nombre-est" class="form-input" readonly style="background-color: #333; cursor: not-allowed;">
+                    </div>
+                    
+                    <!-- ... Resto de campos (Fecha, Sexo, Grado, Seccion) se mantienen igual ... -->
+
+                    <div class="form-group" style="display: flex; gap: 20px;">
+                        <div style="flex: 1;">
+                            <label for="fecha-nac">Fecha de Nacimiento</label>
+                            <input type="date" id="fecha-nac" class="form-input" required style="width: 100%;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label for="sexo">Sexo</label>
+                            <select id="sexo" class="form-input" required style="width: 100%; padding: 5px;">
+                                <option value="">Seleccione...</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Femenino</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="grado">Grado / Año</label>
+                        <select id="grado" class="form-input" required style="width: 100%; padding: 5px;">
+                            <option value="">Seleccione Grado...</option>
+                            <option value="1N" data-desc="1ER NIVEL - SECCION ">1er Nivel</option>
+                            <option value="2N" data-desc="2DO NIVEL - SECCION ">2do Nivel</option>
+                            <option value="1G" data-desc="1ER GRADO - SECCION ">1er Grado</option>
+                            <option value="2G" data-desc="2DO GRADO - SECCION ">2do Grado</option>
+                            <option value="3G" data-desc="3ER GRADO - SECCION ">3er Grado</option>
+                            <option value="4G" data-desc="4TO GRADO - SECCION ">4to Grado</option>
+                            <option value="5G" data-desc="5TO GRADO - SECCION ">5to Grado</option>
+                            <option value="6G" data-desc="6TO GRADO - SECCION ">6to Grado</option>
+                            <option value="1A" data-desc="1ER AÑO - SECCION ">1er Año</option>
+                            <option value="2A" data-desc="2DO AÑO - SECCION ">2do Año</option>
+                            <option value="3A" data-desc="3ER AÑO - SECCION ">3er Año</option>
+                            <option value="4A" data-desc="4TO AÑO - SECCION ">4to Año</option>
+                            <option value="5A" data-desc="5TO AÑO - SECCION ">5to Año</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="seccion">Seccion</label>
+                        <select id="seccion" class="form-input" required style="width: 100%; padding: 5px;">
+                            <option value="">Seleccione Sección...</option>
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                            <option value="C">C</option>
+                            <option value="D">D</option>
+                            <option value="E">E</option>
+                            <option value="F">F</option>
+                            
+                        </select>
+                    </div>
+
+                    <div style="margin-top: 30px; text-align: center;">
+                        <button type="submit" id="btn-guardar" class="submit-btn">
+                            <i class="fas fa-save"></i> Guardar Estudiante
+                        </button>
+                    </div>
+                </form>
+                
+
+                    <!-- Dentro de <section class="card"> -->
+
+            </section>
+        </main>
+
+        <div id="status-message" style="text-align: center; margin-top: 20px;"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="./js/registroEstudiantes.js"></script>
+    <script src="./js/auth.js"></script>
+
+</body>
+</html>

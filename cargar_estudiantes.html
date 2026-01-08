@@ -9,6 +9,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="./css/styles.css">
     <link rel="stylesheet" href="./css/styles_popup.css">
+
+
+    
+    
     <style>
         body {
             display: flex;
@@ -110,7 +114,38 @@
     </style>
 </head>
 <body class="transactions-theme">
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <div class="logo-image">
+                    <img src="./img/logo.jpg" alt="Logo AJS" class="logo-img">
+                </div>
+                <h1>AJS - Carga Masiva de estudiantes</h1>
+                <div class="logo-colors">
+                    <div class="color-box blue"></div>
+                    <div class="color-box yellow"></div>
+                    <div class="color-box white"></div>
+                </div>
+                <!-- Boton cerrar session Después del logo-colors -->
+                <div>
+                    <button onclick="logout()" class="submit-btn secondary" title="Cerrar Sesión">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+                <div>
+                    <button class="submit-btn secondary" title="Menú Principal" onclick="window.location.href='menu.html'">
+                        <i class="fas fa-home"></i>
+                    </button>
+                </div>
+
+            </div>
+
+        </header>
+    <!--</div> -->
     <div class="upload-container">
+        
+
+        
         <section class="card upload-card">
             <div style="text-align: center; margin-bottom: 20px;">
                 <img src="./img/logo.jpg" alt="Logo AJS" class="logo-img" style="height: 70px; margin-bottom: 15px;">
@@ -144,7 +179,7 @@
             </div>
         </section>
     </div>
-
+    </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="./js/auth.js"></script>  
     <script>
