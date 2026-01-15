@@ -7,18 +7,19 @@ const { jsPDF } = window.jspdf;
 // Constantes para dimensiones de página
 const MARGIN_TOP = 20;
 const MARGIN_BOTTOM = 20;
-const MARGIN_LEFT = 15;
+const MARGIN_LEFT = 12;
 const MARGIN_RIGHT = 15;
 const PAGE_WIDTH = 210; // Ancho de página carta en mm
 const PAGE_HEIGHT = 297; // Alto de página carta en mm
 const MAX_Y = PAGE_HEIGHT - MARGIN_BOTTOM;
 
-const columna_descripcion = 85;// columna descripción
+const columna_numero_recibo = 0; // columna número de recibo
+const columna_forma_pago = 17; // columna forma de pago
+const columna_alumno = 35; // columna alumno  
+const columna_descripcion = 88;// columna descripción
 const columna_monto = 25; // columna monto
 const columna_monto_bs = 20; // columna monto en bs   
-const columna_numero_recibo = 15; // columna número de recibo
-const columna_forma_pago = 15; // columna forma de pago
-const columna_alumno = 35; // columna alumno  
+
 
 
 
@@ -140,8 +141,8 @@ export async function generarReporte(tipo_reporte, fecha_reporte, usuario) {
                 }
                 
                 doc.text(recibo.numero_recibo, MARGIN_LEFT, yPosition);
-                doc.text(recibo.forma_pago, MARGIN_LEFT + 15, yPosition);
-                doc.text(recibo.nombre_est, MARGIN_LEFT + 35, yPosition);
+                doc.text(recibo.forma_pago, MARGIN_LEFT + columna_forma_pago, yPosition);
+                doc.text(recibo.nombre_est, MARGIN_LEFT + columna_alumno, yPosition);
                 
                 // Descripción con límite de caracteres para que quepa
                 const descripcion = recibo.descripcion.length > 40 
