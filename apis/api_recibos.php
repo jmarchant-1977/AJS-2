@@ -76,8 +76,109 @@ try {
                 'config' => $config
             ]);
             break;
-            
         case 'save':
+            // Leer datos
+            $data = json_decode(file_get_contents('php://input'));
+            
+            // Validar datos básicos
+            if (empty($data->numero_recibo) || empty($data->fecha) || empty($data->nombre_cliente) || 
+                empty($data->cedula) || empty($data->rubro) || empty($data->forma_pago) || 
+                empty($data->referencia) || empty($data->descripcion) || empty($data->monto)) {
+                throw new Exception("Todos los campos son requeridos");
+            }
+            
+            $conn->beginTransaction();
+            
+            try {
+                // 1. VERIFICAR SI EL NÚMERO YA EXISTE Y CALCULAR EL CORRELATIVO REAL
+                $numeroFinal = $data->numero_recibo;
+                
+                $stmtCheck = $conn->prepare("SELECT COUNT(*) FROM recibos WHERE numero_recibo = ?");
+                $stmtCheck->execute([$numeroFinal]);
+                $existe = $stmtCheck->fetchColumn() > 0;
+
+                if ($existe) {
+                    // Si el número ya existe, buscamos el máximo valor numérico en la tabla
+                    // Usamos CAST para asegurar que la ordenación sea numérica y no de texto
+                    $stmtMax = $conn->query("SELECT MAX(CAST(numero_recibo AS UNSIGNED)) FROM recibos");
+                    $maxActual = (int)$stmtMax->fetchColumn();
+                    
+                    // El nuevo número será el máximo encontrado + 1
+                    $nuevoCorrelativo = $maxActual + 1;
+                    // Lo formateamos de nuevo a 10 dígitos con ceros a la izquierda
+                    $numeroFinal = str_pad($nuevoCorrelativo, 10, '0', STR_PAD_LEFT);
+                }
+
+                // 2. INSERTAR RECIBO PRINCIPAL
+                $stmt = $conn->prepare("INSERT INTO recibos (
+                    numero_recibo, fecha, mes_control, nombre_cliente, nombre_est, cedula, 
+                    rubro, forma_pago, referencia, descripcion, monto, usuario, tasa
+                ) VALUES (
+                    :numero_recibo, :fecha, :mes_control, :nombre_cliente, :nombre_est, :cedula, 
+                    :rubro, :forma_pago, :referencia, :descripcion, :monto, :usuario, :tasa
+                )");
+                
+                $stmt->execute([
+                    ':numero_recibo' => $numeroFinal, // Usamos la variable calculada
+                    ':fecha' => $data->fecha,
+                    ':mes_control' => $data->mes_control,
+                    ':nombre_cliente' => $data->nombre_cliente,
+                    ':nombre_est' => $data->nombre_est,
+                    ':cedula' => $data->cedula,
+                    ':rubro' => $data->rubro,
+                    ':forma_pago' => $data->forma_pago,
+                    ':referencia' => $data->referencia,
+                    ':descripcion' => $data->descripcion,
+                    ':monto' => $data->monto,
+                    ':usuario' => $data->usuario,
+                    ':tasa' => $data->tasa
+                ]);
+                
+                // 3. INSERTAR DETALLES EN registro_pago
+                if (!empty($data->detalles_pago) && is_array($data->detalles_pago)) {
+                    $stmtDetalle = $conn->prepare("INSERT INTO registro_pago (
+                        cedula_est, recibo, fecha, periodo, razon, monto
+                    ) VALUES (
+                        :cedula, :recibo, :fecha, :periodo, :razon, :monto
+                    )");
+
+                    foreach ($data->detalles_pago as $detalle) {
+                        $stmtDetalle->execute([
+                            ':cedula'  => $data->cedula,
+                            ':recibo'  => $numeroFinal, // Usamos la variable calculada
+                            ':fecha'   => $data->fecha,
+                            ':periodo' => $data->periodo_escolar,
+                            ':razon'   => $detalle->razon,
+                            ':monto'   => $detalle->monto
+                        ]);
+                    }
+                }
+
+                // 4. ACTUALIZAR CONFIGURACIÓN (Último número)
+                $numeroInt = (int)$numeroFinal;
+                $conn->exec("UPDATE configuracion SET ultimo_numero = $numeroInt");
+                
+                $conn->commit();
+
+                // Enviamos el número final al cliente por si cambió
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Recibo guardado exitosamente',
+                    'numero_registrado' => $numeroFinal 
+                ]);
+
+            } catch (Exception $e) {
+                if ($conn->inTransaction()) {
+                    $conn->rollBack();
+                }
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Error al guardar: ' . $e->getMessage()
+                ]);
+            }
+            break;    
+        
+        case 'save2':
             // Guardar nuevo recibo
 
             error_log(print_r($_POST, true));

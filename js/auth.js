@@ -8,7 +8,7 @@
         'reportes': ['menu.html','reportes.html','index.html'],
         'estudiantes': ['menu.html'],
         'sadministrador': ['menu.html','index.html', 'consultar_recibos.html', 'reportes.html', 
-                        'estudiantes.html','cargar_estudiantes.html','registroEstudiantes.html',
+                        'estudiantes.html','cargar_estudiantes.html','registroestudiantes.html',
                         'consultar_grupos.html']
     };
     

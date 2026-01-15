@@ -123,6 +123,7 @@
                 }
                 
                 // Realizar solicitud a la API para autenticar
+                console.log('Intentando autenticar usuario:', username);
                 $.ajax({
                     url: './apis/api_recibos.php?action=auth',
                     type: 'POST',

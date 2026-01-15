@@ -114,60 +114,60 @@ function loadConfigAndReciboNumber() {
             if (data.success) {
                 // Llenar rubros
 //-----------------------------------------------------------------------------------------------
-                // Bloque Llenar rubros
+                // Bloque Llenar rubros corregido
                 const rubroSelect = document.getElementById('rubro');
+                rubroSelect.innerHTML = ''; 
                 let previousItem = null;
 
-                data.config.rubros.forEach(item => {
-                    if (Array.isArray(item)) {
-                        // Esto es un grupo, el previousItem es el label
-                        if (previousItem) {
-                            const optgroup = document.createElement('optgroup');
-                            optgroup.label = previousItem;
-                            
-                            // Agregar las opciones del grupo
-                            item.forEach(opcion => {
+                if (data.config.rubros && Array.isArray(data.config.rubros)) {
+                    data.config.rubros.forEach(item => {
+                        if (Array.isArray(item)) {
+                            if (previousItem) {
+                                const optgroup = document.createElement('optgroup');
+                                optgroup.label = previousItem;
+                                item.forEach(opcion => {
+                                    const option = document.createElement('option');
+                                    option.value = opcion;
+                                    option.textContent = opcion;
+                                    optgroup.appendChild(option);
+                                });
+                                rubroSelect.appendChild(optgroup);
+                                previousItem = null;
+                            }
+                        } else {
+                            if (previousItem) {
                                 const option = document.createElement('option');
-                                option.value = opcion;
-                                option.textContent = opcion;
-                                optgroup.appendChild(option);
-                            });
-                            
-                            rubroSelect.appendChild(optgroup);
-                            previousItem = null; // Resetear para no usarlo de nuevo
+                                option.value = previousItem;
+                                option.textContent = previousItem;
+                                rubroSelect.appendChild(option);
+                            }
+                            previousItem = item;
                         }
-                    } else {
-                        // Es un item normal
-                        if (previousItem) {
-                            // Si hay un previousItem pendiente, agregarlo como opción normal
-                            const option = document.createElement('option');
-                            option.value = previousItem;
-                            option.textContent = previousItem;
-                            rubroSelect.appendChild(option);
-                        }
-                        previousItem = item; // Guardar el current item como previous para la próxima iteración
+                    });
+                    if (previousItem && !Array.isArray(previousItem)) {
+                        const option = document.createElement('option');
+                        option.value = previousItem;
+                        option.textContent = previousItem;
+                        rubroSelect.appendChild(option);
                     }
-                });
-
-                // Agregar el último item si quedó pendiente
-                if (previousItem && !Array.isArray(previousItem)) {
-                    const option = document.createElement('option');
-                    option.value = previousItem;
-                    option.textContent = previousItem;
-                    rubroSelect.appendChild(option);
                 }
-
 //-----------------------------------------------------------------------------------------------
                 
                 // Llenar formas de pago
+                // Llenar formas de pago corregido
                 const formaPagoSelect = document.getElementById('forma-pago');
-                data.config.formas_pago.forEach(fp => {
-                    const option = document.createElement('option');
-                    option.value = fp;
-                    option.textContent = fp;
-                    formaPagoSelect.appendChild(option);
-                });
-                
+                formaPagoSelect.innerHTML = '';
+                if (data.config.formas_pago && Array.isArray(data.config.formas_pago)) {
+                    data.config.formas_pago.forEach(fp => {
+                        const option = document.createElement('option');
+                        option.value = fp;
+                        option.textContent = fp;
+                        formaPagoSelect.appendChild(option);
+                    });
+                } else {
+                    console.warn("Formas de pago no encontradas o no es un arreglo");
+                }
+                /*
                 // Llenar periodos
                 const periodoSelect = document.getElementById('periodo');
                 data.config.periodo.forEach(pe => {
@@ -176,12 +176,53 @@ function loadConfigAndReciboNumber() {
                     option.textContent = pe;
                     periodoSelect.appendChild(option);
                 });
-
-                console.log("Data Periodo", data.config.periodo);
-                // Establecer número de recibo
-                document.getElementById('numero-recibo').value = 
-                    (data.config.ultimo_numero + 1).toString().padStart(5, '0');
+                */
                 
+                console.log("Periodo: ",data.config.periodo);
+                console.log("Contenido de data.config.periodo:", data.config.periodo);
+                console.log("Tipo de dato:", typeof data.config.periodo);
+                
+                // --- BLOQUE CORREGIDO PARA PERIODOS ---
+                const periodoSelect = document.getElementById('periodo');
+                periodoSelect.innerHTML = ''; // Limpiar el select
+
+                let listaPeriodos = data.config.periodo;
+
+                // 1. Si llega como String (ej: '["2025-2026","2026-2027"]'), lo convertimos en Array real
+                if (typeof listaPeriodos === 'string') {
+                    try {
+                        listaPeriodos = JSON.parse(listaPeriodos);
+                    } catch (e) {
+                        console.error("Error al convertir el string de periodos a array:", e);
+                    }
+                }
+
+                // 2. Ahora que estamos seguros de que es un Array, lo recorremos
+                if (Array.isArray(listaPeriodos)) {
+                    listaPeriodos.forEach(pe => {
+                        const option = document.createElement('option');
+                        console.log("Valor Periodo: ",pe);
+                        //console.log("texto Periodo: ",option.textContent);
+                        
+                        option.value = pe;
+                        option.textContent = pe;
+                        periodoSelect.appendChild(option);
+                    });
+                } else {
+                    // Caso de emergencia por si el dato es un solo valor simple
+                    const option = document.createElement('option');
+                    option.value = listaPeriodos;
+                    option.textContent = listaPeriodos;
+                    periodoSelect.appendChild(option);
+                }
+                // ----------------------------------------
+
+                
+                // Establecer número de recibo
+                    console.log("ANTES: Ultimo número de recibo cargado: ", data.config.ultimo_numero);
+                document.getElementById('numero-recibo').value = 
+                    (+data.config.ultimo_numero + 1).toString().padStart(10, '0');
+                console.log("DESPUES: Ultimo número de recibo cargado: ", document.getElementById('numero-recibo').value);
                 // Actualizar vista previa
                 updateReciboPreview();
             } else {
@@ -190,6 +231,8 @@ function loadConfigAndReciboNumber() {
         })
         .catch(error => {
             console.error('Error:', error);
+            console.log("Contenido de data.config.periodo:", data.config.periodo);
+            console.log("Tipo de dato:", typeof data.config.periodo);
             showStatusMessage('Error al conectar con el servidor', 'error');
         });
 }
@@ -279,6 +322,8 @@ async function updateReciboPreview() {
     let datosPagos = {};
 
     // Solo buscamos si tenemos cédula y periodo
+    console.log("Valor de periodo antes del fect: ",periodoVal);
+    console.log("Valor de cedula antes del fect: ",cedula);
     if (cedula && periodoVal && periodoVal !== '[Periodo]') {
         try {
             const response = await fetch(`./apis/api_recibos.php?action=get_pagos_control&cedula=${cedula}&periodo=${periodoVal}`);
@@ -374,11 +419,10 @@ function generarTablaControl(alumno, periodo, pagos = {}) {
 function setupDistributionValidation() {
     const inputsNuevos = document.querySelectorAll('.ctrl-input-new');
     const inputMontoTotal = document.getElementById('monto');
-    const inputRubro = document.getElementById('rubro'); // Capturamos el rubro
+    const inputRubro = document.getElementById('rubro'); 
     const msgDiv = document.getElementById('validation-msg');
 
     function validarSuma() {
-        
         // 1. VALIDACIÓN DEL RUBRO
         // Si el rubro NO está en la lista de control, reseteamos y salimos
         if (!RUBROS_CON_CONTROL.includes(inputRubro.value)) {
@@ -392,42 +436,31 @@ function setupDistributionValidation() {
             return true; // Retornamos true para no bloquear nada
         }
         
-        let sumaDistribucion = 0;
+        let sumaCentimos = 0;
         inputsNuevos.forEach(input => {
-            sumaDistribucion += parseCurrency(input.value || '0');
+            // Importante: usar parseFloat para inputs tipo number
+            sumaCentimos += Math.round((parseFloat(input.value) || 0) * 100);
         });
 
-        // Usamos parseCurrency en el monto total para asegurar formato numero
-        const montoTotal = parseCurrency(inputMontoTotal.value);
-        
-        // Margen de error para flotantes
-        const diferencia = Math.abs(sumaDistribucion - montoTotal);
-        const esValido = diferencia < 0.01;
+        const montoTotalCentimos = Math.round(parseCurrency(inputMontoTotal.value) * 100);
+        const diferenciaCentimos = montoTotalCentimos - sumaCentimos;
+        const esValido = diferenciaCentimos === 0;
 
         inputsNuevos.forEach(input => {
-            // Solo pintamos si el input tiene valor o si hay error global
             if (input.value !== '' || !esValido) {
-                if (esValido) {
-                    input.classList.add('distribucion-valida');
-                    input.classList.remove('distribucion-invalida');
-                } else {
-                    input.classList.add('distribucion-invalida');
-                    input.classList.remove('distribucion-valida');
-                }
-            } else {
-                 input.classList.remove('distribucion-valida', 'distribucion-invalida');
+                input.classList.toggle('distribucion-valida', esValido);
+                input.classList.toggle('distribucion-invalida', !esValido);
             }
         });
 
         if (esValido) {
             msgDiv.innerHTML = '<span style="color:green"><i class="fas fa-check"></i> Distribución Correcta</span>';
         } else {
-            msgDiv.innerHTML = `<span style="color:red"><i class="fas fa-times"></i> Diferencia: ${(montoTotal - sumaDistribucion).toFixed(2)}</span>`;
+            msgDiv.innerHTML = `<span style="color:red"><i class="fas fa-times"></i> Diferencia: ${(diferenciaCentimos / 100).toFixed(2)}</span>`;
         }
         
         return esValido;
     }
-
     // Listeners
     inputsNuevos.forEach(input => input.addEventListener('input', validarSuma));
     // También escuchamos cambios en el monto total original para re-validar
@@ -472,6 +505,7 @@ async function saveRecibo() {
     const usuario = usuarioEstacion.nombre || 'desconocido';
     const tasa = tasaActual;
     
+    
     // Validaciones básicas
     // if (!cedula) {
     //     cedula = nombre_est;
@@ -488,36 +522,40 @@ async function saveRecibo() {
     }
 
     
-    // --- NUEVA LÓGICA DE VALIDACIÓN CONDICIONAL ---
-    let detallesPago = []; // Por defecto vacío
-    
-    // Solo si el rubro requiere control, validamos y llenamos el array
-    if (RUBROS_CON_CONTROL.includes(rubro)) {
-        let sumaDistribucion = 0;
+    // --- NUEVA LÓGICA DE VALIDACIÓN CONDICIONAL (CORREGIDA PARA DECIMALES) ---
+        let detallesPago = []; 
         
-        document.querySelectorAll('.ctrl-input-new').forEach(input => {
-            const val = parseCurrency(input.value || '0');
-            if (val > 0) {
-                sumaDistribucion += val;
-                detallesPago.push({
-                    razon: input.dataset.reason,
-                    monto: val
-                });
-            }
-        });
+        if (RUBROS_CON_CONTROL.includes(rubro)) {
+            let sumaDistribucionCentimos = 0; // Trabajamos con enteros (céntimos)
+            
+            document.querySelectorAll('.ctrl-input-new').forEach(input => {
+                // Los inputs tipo number usan punto decimal (.) siempre en su .value
+                const valFloat = parseFloat(input.value) || 0;
+                if (valFloat > 0) {
+                    // Convertimos a céntimos redondeando para evitar basura decimal
+                    sumaDistribucionCentimos += Math.round(valFloat * 100);
+                    detallesPago.push({
+                        razon: input.dataset.reason,
+                        monto: valFloat
+                    });
+                }
+            });
 
-        // Bloqueante: Si la suma no cuadra, NO guardamos
-        if (Math.abs(sumaDistribucion - monto) > 0.01) {
-            showStatusMessage('Error: La distribución del pago no coincide con el monto total.', 'error');
-            return; 
+            // Convertimos el monto total (que viene con formato 0,00) a céntimos
+            const montoTotalCentimos = Math.round(parseCurrency(document.getElementById('monto').value) * 100);
+
+            // Bloqueante: Si la suma en céntimos no es igual
+            if (sumaDistribucionCentimos !== montoTotalCentimos) {
+                const diferencia = (montoTotalCentimos - sumaDistribucionCentimos) / 100;
+                showStatusMessage(`Error: La distribución (${(sumaDistribucionCentimos/100).toFixed(2)}) no coincide con el total (${(montoTotalCentimos/100).toFixed(2)}). Diferencia: ${diferencia.toFixed(2)}`, 'error');
+                return; 
+            }
+            
+            if (detallesPago.length === 0 && monto > 0) {
+                showStatusMessage('Error: Debe distribuir el monto en los meses correspondientes.', 'error');
+                return;
+            }
         }
-        
-        // Bloqueante: Si es rubro controlado, debe tener al menos un detalle distribuido
-        if (detallesPago.length === 0 && monto > 0) {
-            showStatusMessage('Error: Debe distribuir el monto en los meses correspondientes.', 'error');
-            return;
-        }
-    }
 
 
 
@@ -571,17 +609,26 @@ async function saveRecibo() {
         if (!response.ok || !result.success) {
             throw new Error(result.message || 'Error al guardar el recibo - Presione F5');
         }
+
+
         
-        showStatusMessage('Recibo guardado exitosamente!', 'success');  
+       // showStatusMessage('Recibo guardado exitosamente!', 'success'); 
+        if (result.success) {
+            showStatusMessage(`Recibo guardado exitosamente con el N° ${result.numero_registrado}`, 'success');
+            var numero_Recibo = result.numero_registrado.toString().padStart(10, '0');
+        } 
         loadConfigAndReciboNumber();      
-        activatePrintButton(numeroRecibo);
+        activatePrintButton(numero_Recibo);
 
         // Habilitar botón de imprimir
         //document.getElementById('print-btn').disabled = false;
         
+        
         // Actualizar número de recibo para el próximo
-        document.getElementById('numero-recibo').value = 
-            (parseInt(numeroRecibo) + 1).toString().padStart(5, '0');
+            console.log("Número de recibo antes de setear nuevo: ", numeroRecibo);
+            document.getElementById('numero-recibo').value = 
+            (parseInt(numeroRecibo) + 1).toString().padStart(10, '0');
+            console.log("Nuevo número de recibo seteado: ", document.getElementById('numero-recibo').value);
             
         // Limpiar formulario (excepto número de recibo)
         ['nombre-cliente', 'cedula','nombre-est', 'referencia','descripcion', 'monto'].forEach(id => {
@@ -594,7 +641,7 @@ async function saveRecibo() {
         
         // Actualizar formulario y tabla
         ['nombre-cliente', 'referencia','descripcion', 'monto'].forEach(id => document.getElementById(id).value = '');
-        document.getElementById('numero-recibo').value = (parseInt(numeroRecibo) + 1).toString().padStart(5, '0');
+        document.getElementById('numero-recibo').value = (parseInt(numeroRecibo) + 1).toString().padStart(10, '0');
 
         // Actualizar vista previa
         updateReciboPreview();
