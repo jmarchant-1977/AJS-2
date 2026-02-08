@@ -1,58 +1,26 @@
 $(document).ready(function() {
     const API_URL = './apis/api_recibos.php';
 
-    // --- FUNCIONES DE CONTROL DE INTERFAZ ---
-
-    /**
-     * Habilita o deshabilita los campos del formulario (excepto búsqueda)
-     * @param {boolean} deshabilitar 
-     */
-    function toggleCamposFormulario(deshabilitar) {
-        $('#form-estudiante')
-            .find('input, select, button')
-            .not('#cedula-est, #btn-buscar-cedula, #btn-cancelar-busqueda')
-            .prop('disabled', deshabilitar);
-    }
-
-    /**
-     * Resetea la interfaz al estado de búsqueda inicial
-     */
-    function resetearEstadoInicial() {
-        $('#form-estudiante')[0].reset();
-        $('#nombre-est').val('');
-        $('#cedula-est').prop('disabled', false).val('').focus();
-        $('#btn-buscar-cedula').prop('disabled', false);
-        toggleCamposFormulario(true);
-    }
-
-    // Estado Inicial al cargar la página
-    toggleCamposFormulario(true);
-
-    // Obligar a que la cédula solo acepte números
-    $('#cedula-est').on('input', function() {
-        this.value = this.value.replace(/[^0-9]/g, '');
-    });
-
-    /**
-     * Concatena nombres para la vista del recibo
-     */
+    // Función para concatenar nombres automáticamente (Visualización Recibo)
     function actualizarNombreCompleto() {
         const pNombre = $('#p-nombre').val().trim();
         const pApellido = $('#p-apellido').val().trim();
+        
+        // Solo muestra Primer Nombre + Primer Apellido para el recibo
         $('#nombre-est').val(`${pNombre} ${pApellido}`.toUpperCase());
     }
 
-    /**
-     * Muestra mensajes tipo Popup
-     */
+    // Función de mensajes tipo Popup
     function showStatusMessage(message, type = 'info') {
         const existingPopup = document.getElementById('custom-status-popup');
         if (existingPopup) existingPopup.remove();
 
         const popup = document.createElement('div');
         popup.id = 'custom-status-popup';
+
         const popupContent = document.createElement('div');
         popupContent.className = 'popup-content';
+
         const messageElement = document.createElement('p');
         messageElement.className = 'popup-message';
         messageElement.textContent = message;
@@ -64,6 +32,7 @@ $(document).ready(function() {
         const acceptButton = document.createElement('button');
         acceptButton.className = 'popup-button';
         acceptButton.textContent = 'Aceptar';
+        
         acceptButton.addEventListener('click', () => {
             popup.classList.remove('show');
             setTimeout(() => popup.remove(), 300);
@@ -73,21 +42,17 @@ $(document).ready(function() {
         popupContent.appendChild(acceptButton);
         popup.appendChild(popupContent);
         document.body.appendChild(popup);
+        
+        // Pequeño delay para que la transición CSS 'show' funcione
         setTimeout(() => popup.classList.add('show'), 10);
     }
 
-    // Listeners para actualización de nombre visual
+    // Listeners para los 4 campos de nombre
     $('#p-nombre, #s-nombre, #p-apellido, #s-apellido').on('input', actualizarNombreCompleto);
 
-    // Botón Cancelar / Nueva Búsqueda
-    $('#btn-cancelar-busqueda').on('click', function() {
-        resetearEstadoInicial();
-    });
-
-    // --- BÚSQUEDA POR CÉDULA ---
+    // Búsqueda por Cédula
     $('#btn-buscar-cedula').on('click', function() {
         const cedula = $('#cedula-est').val().trim();
-        
         if (!cedula) {
             showStatusMessage('Ingrese una cédula para buscar', 'info');
             return;
@@ -98,20 +63,18 @@ $(document).ready(function() {
         fetch(`${API_URL}?action=get_estudiante&cedula=${cedula}`)
             .then(res => res.json())
             .then(data => {
-                // ACTIVAR campos y BLOQUEAR cédula (independientemente del resultado)
-                toggleCamposFormulario(false);
-                $('#cedula-est').prop('disabled', true);
-                $('#btn-buscar-cedula').prop('disabled', true);
-
                 if (data.success && data.data) {
                     const est = data.data;
+                    
+                    // Lógica para separar nombres y apellidos guardados en BD
                     const nombresArr = est.nombres ? est.nombres.split(' ') : ['', ''];
                     const apellidosArr = est.apellidos ? est.apellidos.split(' ') : ['', ''];
 
                     $('#p-nombre').val(nombresArr[0]);
-                    $('#s-nombre').val(nombresArr.slice(1).join(' '));
+                    $('#s-nombre').val(nombresArr.slice(1).join(' ')); // El resto es segundo nombre
                     $('#p-apellido').val(apellidosArr[0]);
-                    $('#s-apellido').val(apellidosArr.slice(1).join(' '));
+                    $('#s-apellido').val(apellidosArr.slice(1).join(' ')); // El resto es segundo apellido
+                    
                     $('#fecha-nac').val(est.fecha_nac);
                     $('#sexo').val(est.sexo);
                     
@@ -121,20 +84,16 @@ $(document).ready(function() {
                         $('#seccion').val(partes[1]);
                     }
 
-                    actualizarNombreCompleto();
+                    actualizarNombreCompleto(); // Refrescar el campo visual
                     showStatusMessage('Datos cargados correctamente.', 'success');
                 } else {
-                    // Limpiar campos si no existe para permitir nuevo registro
-                    $('#p-nombre, #s-nombre, #p-apellido, #s-apellido, #fecha-nac, #nombre-est').val('');
-                    showStatusMessage('La cédula no existe.\nYa puede crear el nuevo registro.', 'info');
+                    showStatusMessage('La cédula no existe.\nDebe crear un nuevo registro.', 'info');
                 }
             })
-            .catch(err => {
-                showStatusMessage('Error al conectar con el servidor', 'error');
-            });
+            .catch(err => showStatusMessage('Error al conectar con el servidor', 'error'));
     });
 
-    // --- ENVÍO DEL FORMULARIO ---
+    // Envío del Formulario
     $('#form-estudiante').on('submit', function(e) {
         e.preventDefault();
         
@@ -146,11 +105,12 @@ $(document).ready(function() {
         const pApe = $('#p-apellido').val().trim();
         const sApe = $('#s-apellido').val().trim();
 
+        // Preparar la data concatenada para la BD
         const studentData = {
-            cedula: $('#cedula-est').val().trim(), 
+            cedula: $('#cedula-est').val().trim(),
             nombres: sNom ? `${pNom} ${sNom}`.toUpperCase() : pNom.toUpperCase(),
             apellidos: sApe ? `${pApe} ${sApe}`.toUpperCase() : pApe.toUpperCase(),
-            nombre_apellido: $('#nombre-est').val(),
+            nombre_apellido: $('#nombre-est').val(), // Este es Visual (P1 + A1)
             fecha_nac: $('#fecha-nac').val(),
             sexo: $('#sexo').val(),
             id_grado_cursa: $('#grado').val() + '-' + $('#seccion').val(),
@@ -160,6 +120,7 @@ $(document).ready(function() {
 
         const $btn = $('#btn-guardar');
         const originalBtnHtml = $btn.html();
+        
         $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Guardando...');
 
         fetch(`${API_URL}?action=save_estudiante`, {
@@ -171,7 +132,8 @@ $(document).ready(function() {
         .then(data => {
             if (data.success) {
                 showStatusMessage(data.message || 'Estudiante guardado con éxito', 'success');
-                resetearEstadoInicial();
+                $('#form-estudiante')[0].reset();
+                $('#nombre-est').val(''); // Limpiar visual manually
             } else {
                 showStatusMessage('Error: ' + (data.error || 'No se pudo guardar'), 'error');
             }

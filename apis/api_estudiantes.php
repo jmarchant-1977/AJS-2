@@ -23,7 +23,8 @@ class EstudiantesHandler {
         
         // Lista de caracteres problemáticos comunes y sus correcciones
         $reemplazos = [
-            '�' => 'Ñ',
+            '�' => 'Ñ', 
+            'ï¿½' => 'ñ',
             'Ã±' => 'ñ',
             'Ã‘' => 'Ñ',
             'Ã‰' => 'É',
